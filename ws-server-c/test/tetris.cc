@@ -405,7 +405,7 @@ int main ()
 	int delline = -1;
 	
 	char glokk[256];
-	sprintf(glokk, "echo http://homepages.laas.fr/gauchard/W/W.html?server=`hostname`:%i", port);
+	sprintf(glokk, "echo http://`hostname`:%i/?server=`hostname`:%i", port, port);
 	system(glokk);
 	
 	for (int x = 0; x < SX; x++)

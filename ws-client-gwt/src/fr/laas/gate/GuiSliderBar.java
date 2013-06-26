@@ -54,8 +54,6 @@
 package fr.laas.gate;
 
 import java.util.List;
-
-import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.user.client.ui.Widget;
 
 
