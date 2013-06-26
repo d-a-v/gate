@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<project name="gate" default="build" basedir=".">
+  
+  <property environment="env"/>
+  
+  <!-- Arguments to gwtc and devmode targets -->
+  <property name="gwt.args" value="" />
+
+  <!-- Configure path to GWT SDK -->
+  <property name="gwt.sdk" location="${env.HOME}/.gwt" />
+  
+  <presetdef name="javac">
+    <javac includeantruntime="false" />
+  </presetdef>
+      
+  <path id="project.class.path">
+    <pathelement location="war/WEB-INF/classes"/>
+    <pathelement location="${gwt.sdk}/gwt-user.jar"/>
+    <fileset dir="${gwt.sdk}" includes="gwt-dev*.jar"/>
+    <!-- Add any additional non-server libs (such as JUnit) -->
+    <!-- fileset dir="war/WEB-INF/lib" includes="**/*.jar"/ -->
+    <fileset dir="lib" includes="*.jar"/>
+  </path>
+
+  <target name="javac" description="Compile java source to bytecode">
+    <mkdir dir="war/WEB-INF/classes"/>
+    <javac srcdir="src" includes="**" encoding="utf-8"
+        destdir="war/WEB-INF/classes"
+        source="1.5" target="1.5" nowarn="true"
+        debug="true" debuglevel="lines,vars,source">
+      <classpath refid="project.class.path"/>
+    </javac>
+    <copy todir="war/WEB-INF/classes">
+      <fileset dir="src" excludes="**/*.java"/>
+    </copy>
+  </target>
+
+  <target name="gwtc" depends="javac" description="GWT compile to JavaScript (production mode)">
+    <java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler">
+
+      <classpath>
+        <pathelement location="src"/>
+        <path refid="project.class.path"/>
+        <pathelement location="${gwt.sdk}/validation-api-1.0.0.GA.jar" />
+        <pathelement location="${gwt.sdk}/validation-api-1.0.0.GA-sources.jar" />
+      </classpath>
+      <!-- add jvmarg -Xss16M or similar if you see a StackOverflowError -->
+      <jvmarg value="-Xss16M"/>
+      <jvmarg value="-Xmx256M"/>
+      <arg line="-war"/>
+      <arg value="war"/>
+      <!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
+      <!--arg line="-style PRETTY -draftCompile -strict -logLevel INFO"/-->
+      <arg line="-localWorkers 32"/>
+      <arg line="${gwt.args}"/>
+      <arg value="fr.laas.gate"/>
+    </java>
+
+    <copy todir="war/gate">
+      <fileset file="lib/index.html"/>
+    </copy>
+
+  </target>
+
+  <target name="devmode" depends="javac" description="Run development mode">
+    <java failonerror="true" fork="true" classname="com.google.gwt.dev.DevMode">
+      <classpath>
+        <pathelement location="src"/>
+        <path refid="project.class.path"/>
+        <pathelement location="${gwt.sdk}/validation-api-1.0.0.GA.jar" />
+        <pathelement location="${gwt.sdk}/validation-api-1.0.0.GA-sources.jar" />
+      </classpath>
+      <jvmarg value="-Xmx256M"/>
+      <arg value="-startupUrl"/>
+      <arg value="gate.html"/>
+      <arg line="-war"/>
+      <arg value="war"/>
+      <!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
+      <!-- arg line="-strict -style PRETTY -localWorkers 8 -draftCompile"/-->
+      <arg line="-localWorkers 32"/>
+      <arg line="${gwt.args}"/>
+      <arg value="fr.laas.gate"/>
+    </java>
+  </target>
+
+  <target name="eclipse.generate" description="Generate eclipse project">
+    <java failonerror="true" fork="true" classname="com.google.gwt.user.tools.WebAppCreator">
+      <classpath>
+        <path refid="project.class.path"/>
+      </classpath>
+      <arg value="-XonlyEclipse"/>
+      <arg value="-ignore"/>
+      <arg value="fr.laas.gate"/>
+    </java>
+  </target>
+
+
+  <target name="hosted" depends="devmode" description="Run development mode (NOTE: the 'hosted' target is deprecated)" />
+
+  <target name="build" depends="gwtc" description="Build this project" />
+
+  <target name="clean" description="Cleans this project">
+    <delete includeemptydirs="true">
+      <fileset dir="war" includes="**/*"/>
+    </delete>
+  </target>
+
+</project>

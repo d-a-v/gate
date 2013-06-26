@@ -1,0 +1,23 @@
+
+Part of this source repository (ws-server-c/) uses the
+statically linked ws-server-c/libwebsockets library and is
+licensed under LGPL with the following notice:
+
+	1) Static linking of programs with the libwebsockets
+	library does not constitute a derivative work and does
+	not require the author to provide source code for the
+	program, use the shared libwebsockets libraries, or
+	link their program against a user-supplied version of
+	libwebsockets.
+	If you link the program to a modified version of
+	libwebsockets, then the changes to libwebsockets must
+	be provided under the terms of the LGPL in sections 1,
+	2, and 4.
+
+Check,
+	http://libwebsockets.org
+
+This local libwebsockets repository is a modified copy of the
+original repository (adds new feature, does not break
+anything).  It will be updated according to the original one,
+until it possibly be integrated into it.

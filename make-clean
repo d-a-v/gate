@@ -1,0 +1,5 @@
+#!/bin/sh
+
+(cd ws-client-gwt; ant clean)
+(cd ws-server-c; make distclean)
+rm -f bin-*

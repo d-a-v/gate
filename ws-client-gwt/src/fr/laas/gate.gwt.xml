@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- module rename-to='mywebapp'-->
+<module rename-to='gate'>
+
+  <!-- need to override, default is <source path="client"/>       -->
+  <source path="" />
+  
+  <!-- Inherit the core Web Toolkit stuff.                        -->
+  <inherits name='com.google.gwt.user.User'/>
+
+  <!-- Inherit the default GWT style sheet.  You can change       -->
+  <!-- the theme of your GWT application by uncommenting          -->
+  <!-- any one of the following lines.                            -->
+  <inherits name='com.google.gwt.user.theme.clean.Clean'/>
+  <!-- <inherits name='com.google.gwt.user.theme.standard.Standard'/> -->
+  <!-- <inherits name='com.google.gwt.user.theme.chrome.Chrome'/> -->
+  <!-- <inherits name='com.google.gwt.user.theme.dark.Dark'/>     -->
+
+  <!-- Other module inherits                                      -->
+  <inherits name='com.google.gwt.visualization.Visualization'/>
+  <inherits name='org.vaadin.gwtgraphics.GWTGraphics' />
+  
+  <!-- Specify the app entry point class.                         -->
+  <entry-point class='fr.laas.gate.Gate'/>
+
+  <!-- Specify the paths for translatable code                    -->
+
+<!--
+<set-property name="compiler.emulatedStack" value="true" />
+<set-configuration-property name="compiler.emulatedStack.recordLineNumbers" value="true"/>
+<set-configuration-property name="compiler.emulatedStack.recordFileNames" value="true"/>
+-->
+
+</module>

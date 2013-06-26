@@ -1,0 +1,30 @@
+# Compiled Object files
+*.slo
+*.lo
+*.o
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+
+# eclipse noise
+.project
+
+# java
+*.class
+
+# gwt
+war
+gwt-unitCache
+
+# editors
+*~
+
+# links
+bin-gate
+bin-tetris

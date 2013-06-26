@@ -1,0 +1,9 @@
+using a ; (by mistake) in hostname breaks things
+arrange object help: give an example for each
+calibration window: update displayed values on resize
+
+update parser in gfx:
+# error: graph update add r1 rectangle 0.000000 70.463112 12.499994 100.000000
+#                         ^ already exists
+# error: graph update add r1 rectangle 0.000000 70.463112 12.499994 100.000000
+#                            ^ unknown attribute

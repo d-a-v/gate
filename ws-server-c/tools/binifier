@@ -1,0 +1,17 @@
+#!/bin/sh
+
+(cd ..; make tools/rawc)
+
+path=../../ws-client-gwt/war/gate
+
+here=$(pwd)
+
+rm -f data.[ch]
+
+cd $path
+
+[ ! -f favicon.ico ] && wget http://www.laas.fr/favicon.ico
+
+$here/rawc $here/data
+
+$here/rawc $here/data bin `find -type f`

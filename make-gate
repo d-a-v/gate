@@ -1,0 +1,54 @@
+#!/bin/sh
+
+wrong ()
+{
+	cat << EOF
+
+****************************
+*** Something went wrong ***
+****************************
+
+EOF
+
+	
+	[ -f /usr/include/lockdev.h ] || cat << EOF
+* try install lockdev (missing /usr/include/lockdev.h)
+	(on debian/ubuntu: sudo apt-get install liblockdev1-dev)
+
+EOF
+	
+	[ -f ${HOME}/.gwt/gwt-dev.jar ] || cat << EOF
+* GWT is unusable (${HOME}/.gwt/gwt-dev.jar not found)
+  GWT should be accessible through the symbolic link (HOME)/.gwt
+  try:
+	ln -s /path/to/GWT/root/directory ~/.gwt
+
+  if you have not downloaded the GWT SDK yet, then check:
+  	http://www.gwtproject.org/download.html
+  unzip the archive somewhere and make the symbolic link ~/.gwt points to it.
+  
+EOF
+}
+
+tryit()
+{
+	cat << EOF
+
+Everything seems fine.
+try and launch
+	./bin-tetris
+then make your browser points to
+	http://127.0.0.1:1234?server=127.0.0.1:1234
+
+EOF
+}
+
+
+if (cd ws-server-c; make); then
+	rm -f bin-gate; ln -s ws-server-c/gate/gate bin-gate
+	rm -f bin-tetris; ln -s ws-server-c/test/tetris bin-tetris
+	tryit
+else
+	wrong
+fi
+
