@@ -158,11 +158,14 @@ public class WebSocketClient
 	@SuppressWarnings("unused")
 	private void onError ()
 	{
-		connected = false;
-		if (!closing)
+		if (connected)
 		{
-			Gate.debug("wsc::onError");
-			callback.onError(this);
+			connected = false;
+			if (!closing)
+			{
+				Gate.debug("wsc::onError");
+				callback.onError(this);
+			}
 		}
 	}
 

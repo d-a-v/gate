@@ -872,11 +872,15 @@ public class Gate implements EntryPoint
 	///////////////////////////////////////////////////////
 
 	//XXX move me
-	//private ArrayList<History> remoteHistory = new ArrayList<History>();
-	//List<WebSocketClient> wsl = new ArrayList<WebSocketClient>();
-	
-	List<WebSocketClient> remoteHistory = new ArrayList<WebSocketClient>();
-	WebSocketClientCallback wscb = new WSCallback();
+	private List<WebSocketClient> remoteHistory = new ArrayList<WebSocketClient>();
+	private WebSocketClientCallback wscb = new WSCallback();
+	private String remoteValue = "";
+	private String remotePassword = "";
+	private boolean remoteDeleteNow = false;
+	private boolean tryMeInvoked = false;
+	private boolean calibrateInvoked = false;
+	private int gfxDemoX = 1;
+	private Storage storage = null;
 	
 	class WSCallback implements WebSocketClientCallback
     {
@@ -885,13 +889,13 @@ public class Gate implements EntryPoint
         	debug("gui connected to server");
         	send("# " + appName + " talking - protocol version " + protocolVersion);
         	parseMulti(ws.getIntfObject().getName() + " update bg green");
-		    // change order
+		    // change order in history
 		    remoteLoginHistoryBackup();
         }
         
         public void onClose (final WebSocketClient ws)
         {
-        	debug("socket closed");
+        	//debug("onClose");
         	//alert("Peer has vanished");
         	parseMulti(ws.getIntfObject().getName() + " update bg " + (ws.isLiving()? "orange": "lightgray"));
         	if (ws.isLiving())
@@ -906,19 +910,19 @@ public class Gate implements EntryPoint
             				debug("trying now to reconnect to " + ws.getServer());
         					ws.reconnect();
         				}
+        				else debug("timer: living="+ws.isLiving()+" conn="+ws.isConnected());
         			}
         		};
         		timer.schedule(1000); // 1000 = 1 sec
         	}
-		    // change order
+        	
+		    // change order in history
 		    remoteLoginHistoryBackup();
         }
         
         public void onError (final WebSocketClient ws)
         {
-        	debug("socket error");
-        	parseMulti(ws.getIntfObject().getName() + " update bg orange");
-        	stopConnection(ws); // onClose() will be called
+        	stopConnection(ws);
         	alert("Connection has crashed (" + ws.getServer() + ")");
         }
         
@@ -930,14 +934,6 @@ public class Gate implements EntryPoint
     }
 
 	//XXX move me
-	private String remoteValue = "";
-	private String remotePassword = "";
-	private boolean remoteDeleteNow = false;
-	private boolean tryMeInvoked = false;
-	private boolean calibrateInvoked = false;
-	private int gfxDemoX = 1;
-	private Storage storage = null;
-
     void remoteLoginHistoryUpdate ()
     {
         int i;
@@ -1082,7 +1078,7 @@ public class Gate implements EntryPoint
 	{
 		if (h.isLiving())
 		{
-	    	parseMulti(h.getIntfObject().getName() + " update bg lightgray");
+			parseMulti(h.getIntfObject().getName() + " update bg lightgray");
 	    	h.close();
 	    }
 	}
@@ -1403,6 +1399,7 @@ if (!blob) { blob = true; debug("finish me here"); }
 		remoteLoginWindowSetup();
 		
 		String server = Window.Location.getParameter("server");
+		debug("server parameter value is '" + server + "'");
 		if (!server.equals("undefined"))
 			newConnection(server);		
 	}
