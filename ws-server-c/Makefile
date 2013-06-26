@@ -82,7 +82,7 @@ distclean mrproper: clean cleandata
 
 ###### gwt
 
-$(GWT):
+$(GWT): $(shell echo ../ws-client-gwt/src/fr/laas/gate/*.java)
 	cd ../ws-client-gwt; ant build
 
 ###### websockets
