@@ -38,7 +38,7 @@ Everything seems fine.
 try and launch
 	./bin-tetris
 then make your browser points to
-	http://127.0.0.1:1234?server=127.0.0.1:1234
+	http://`hostname`:1234?server=`hostname`:1234
 
 EOF
 }
