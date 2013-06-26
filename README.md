@@ -9,3 +9,5 @@ protocol (simple human readable graphic commands) translators
 to websockets protocol are also provided to connect user
 applications to the browser via a C library or simple TCP
 server.
+
+(tested only under ubuntu-12.04/precise)
