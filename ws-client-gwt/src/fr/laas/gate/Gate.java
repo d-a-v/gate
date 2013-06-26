@@ -910,7 +910,6 @@ public class Gate implements EntryPoint
             				debug("trying now to reconnect to " + ws.getServer());
         					ws.reconnect();
         				}
-        				else debug("timer: living="+ws.isLiving()+" conn="+ws.isConnected());
         			}
         		};
         		timer.schedule(1000); // 1000 = 1 sec
@@ -933,7 +932,6 @@ public class Gate implements EntryPoint
         }
     }
 
-	//XXX move me
     void remoteLoginHistoryUpdate ()
     {
         int i;
