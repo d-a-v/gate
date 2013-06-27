@@ -62,7 +62,6 @@
 #include "malloc_e.h"
 
 #define VERSION			"20130222"
-#define GATE_PROTOCOL_NAME	"gate"
 #define GATE_AUTH_FROM_PEER	"OK gate"
 
 #define PORT_TCP		(GATE_DEFAULT_PORT_WS + 1)
@@ -134,7 +133,7 @@ int main (int argc, char *argv[])
 		}
 	}
 
-	if (gate_init(GATE_PROTOCOL_NAME) != 0)
+	if (gate_init(GATE_WS_PROTOCOL) != 0)
 		exit(1);
 	
 printf("port=%i\n",port_ws);
@@ -205,7 +204,7 @@ if (serial) fprintf(stderr, "serial=%s\n", serial);
 						if (fd->flags & FDF_NEEDTRIGGER)
 						{
 							fd->flags &= ~FDF_NEEDTRIGGER;
-							gate_fd_send(n, GATE_PROTOCOL_NAME);
+							gate_fd_send(n, GATE_WS_PROTOCOL);
 						}
 					}
 					else
