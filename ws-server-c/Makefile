@@ -45,10 +45,10 @@ libgate/wsserver.c: $(WSH) tools/data.h
 libgate/libgate.a: libgate/wsserver.o libgate/fifo.o libgate/malloc_e.o libgate/gatestr.o tools/data.o
 	$(AR) $(ARFLAGS) $@ $^
 	
-tools/data.h tools/data.c: $(GWT)
+tools/data.h tools/data.c: $(GWT) $(RAWC)
 	(cd tools; ./binifier)
 
-# sepcial comp rule for rawc which has no depends
+# special comp rule for rawc which has no depends
 tools/rawc: tools/rawc.o
 	$(CC) $^ -o $@ $(LDFLAGS)
 	
