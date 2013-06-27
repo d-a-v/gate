@@ -12,6 +12,4 @@ cd $path
 
 [ ! -f favicon.ico ] && wget http://www.laas.fr/favicon.ico
 
-$here/rawc $here/data
-
 $here/rawc $here/data bin `find -type f`
