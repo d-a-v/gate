@@ -49,7 +49,7 @@
  * 
  *************************************************************/
 
-
+#define DEBUG 0
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -124,13 +124,16 @@ void gate_del_pollfd (int fd)
 void print_unhandled_reason (const char* from, int reason)
 {
 	int i;
+
+	(void)from;
+
 	for (i = 0; reasons[i].what; i++)
 		if (reasons[i].reason == reason)
 		{
-			fprintf(stderr, "unhandled reason %i in %s: %s\n", reason, from, reasons[i].what);
+			lwsl_debug("unhandled reason %i in %s: %s\n", reason, from, reasons[i].what);
 			return;
 		}
-	fprintf(stderr, "unhandled reason %i in %s (no description)\n", reason, from);
+	lwsl_debug("unhandled reason %i in %s (no description)\n", reason, from);
 }
 
 static int callback_http (
@@ -154,8 +157,11 @@ static int callback_http (
 		const char* ext;
 		const char* content_type;
 		char* qmark;
+		int ret;
 		
-		fprintf(stderr, "HTTP URI: '%s'\n", (char *)in);
+#if DEBUG
+		lwsl_notice("HTTP URI: '%s'\n", (char *)in);
+#endif
 		
 		// cut at first '?' from end
 		for (qmark = ((char*)in)+strlen(in); qmark != in && *qmark != '?'; qmark--);
@@ -185,13 +191,16 @@ static int callback_http (
 		else
 			content_type = "";
 		
-		fprintf(stderr, "serving '%s'\n", bin->name);
-		if (libwebsockets_serve_http_bin(context, wsi, bin->data, bin->size, content_type))
-			fprintf(stderr, "Failed to send HTTP file\n");
-		else
-			fprintf(stderr, "done\n");
-
-		break;
+		lwsl_notice("serving '%s'\n", bin->name);
+		ret = libwebsockets_serve_http_bin(context, wsi, bin->data, bin->size, content_type);
+		if (ret)
+		{
+			if (ret < 0)
+				lwsl_err("Failed to send HTTP file '%s'\n", (char*)in);
+			// ret > 0 indicates already finished
+			return -1; // close
+		}
+		return 0; // further automatic libwebsockets processing needed
 	}
 	
 	case LWS_CALLBACK_HTTP_FILE_COMPLETION:
@@ -219,7 +228,9 @@ static int callback_http (
 		break;
 
 	default:
+#if DEBUG
 		print_unhandled_reason("cb_http", reason);
+#endif
 		break;
 
 	}
@@ -248,7 +259,7 @@ static int callback_gate (
 
 			if (len > OUTPUT_BUFFER_SIZE)
 			{
-				fprintf(stderr, "line too long for websocket (%i > %i), increase OUTPUT_BUFFER_SIZE in wsserver.c:\n('%s')\n", len, OUTPUT_BUFFER_SIZE, to_send);
+				lwsl_err("line too long for websocket (%i > %i), increase OUTPUT_BUFFER_SIZE in wsserver.c:\n('%s')\n", len, OUTPUT_BUFFER_SIZE, to_send);
 				exit(1);
 			}
 				
@@ -355,7 +366,7 @@ int gate_start (void)
 	context = libwebsocket_create_context(&info);
 	if (!context)
 	{
-		fprintf(stderr, "libwebsocket init failed\n");
+		lwsl_err("libwebsocket init failed\n");
 		return -1;
 	}
 	
@@ -374,11 +385,11 @@ int gate_poll_ms (int timeout_ms)
 		if (!fifo_is_empty(ws_output))
 			libwebsocket_callback_on_writable_all_protocol(&protocols[protocol_gate]);
 
-		LOG(5, "call poll(%ifds, timeout=%ims)\n", count_pollfds, timeout_ms);
+		lwsl_notice("call poll(%ifds, timeout=%ims)\n", count_pollfds, timeout_ms);
 
 		ret = wsret = poll(pollfds, count_pollfds, timeout_ms);
 
-		LOG(5, "poll ret = %i\n", ret);
+		lwsl_notice("poll ret = %i\n", ret);
 
 		if (ret < 0)
 		{
@@ -390,7 +401,7 @@ int gate_poll_ms (int timeout_ms)
 			for (i = 0; i < count_pollfds; i++)
 				if (pollfds[i].revents)
 				{
-					LOG(6, "poll: fd=%i POLLIN=%i POLLOUT=%i\n", pollfds[i].fd, !!(pollfds[i].revents & POLLIN), !!(pollfds[i].revents & POLLOUT));
+					lwsl_notice("poll: fd=%i POLLIN=%i POLLOUT=%i\n", pollfds[i].fd, !!(pollfds[i].revents & POLLIN), !!(pollfds[i].revents & POLLOUT));
 					if (libwebsocket_service_fd(context, &pollfds[i]) < 0)
 						return -1;
 					if (!pollfds[i].revents)
@@ -403,12 +414,9 @@ int gate_poll_ms (int timeout_ms)
 				
 	} while (((timeout_ms < 0 || wsret > 0) && ret == 0) && fifo_is_empty(ws_input));
 
-	if (GATE_LOGLEVEL >= 5)
-	{
-		for (i = 0; i < count_pollfds; i++)
-			if (pollfds[i].revents)
-				LOG(5, "finally poll: fd=%i POLLIN=%i POLLOUT=%i\n", pollfds[i].fd, !!(pollfds[i].revents & POLLIN), !!(pollfds[i].revents & POLLOUT));
-	}
+	for (i = 0; i < count_pollfds; i++)
+		if (pollfds[i].revents)
+			lwsl_notice("finally poll: fd=%i POLLIN=%i POLLOUT=%i\n", pollfds[i].fd, !!(pollfds[i].revents & POLLIN), !!(pollfds[i].revents & POLLOUT));
 
 	return ret;
 }
@@ -453,7 +461,7 @@ int gate_talking_protocol (const char* recv)
 
 void gate_stop (void)
 {
-	fprintf(stderr, "cleaning ws...\n");
+	lwsl_notice("cleaning ws...\n");
 	
 	if (context)
 		libwebsocket_context_destroy(context);
@@ -465,3 +473,7 @@ void gate_stop (void)
 	gate_str_free(&psend_line);
 }
 
+void gate_lws_setloglevel (int loglevel)
+{
+	lws_set_log_level(loglevel, NULL);
+}

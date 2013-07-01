@@ -70,7 +70,7 @@ void gate_str_grow (gate_str_t* str, size_t grow_size)
 	char* new_str = realloc(str->str, new_alloked);
 	if (new_str == NULL)
 	{
-		fprintf(stderr, "cannot realloc from %lu to %lu bytes...\n", (long)str->alloked, (long)new_alloked);
+		lwsl_err("cannot realloc from %lu to %lu bytes...\n", (long)str->alloked, (long)new_alloked);
 		exit(EXIT_FAILURE);
 	}
 	str->alloked = new_alloked;

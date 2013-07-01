@@ -49,8 +49,6 @@
  * 
  *************************************************************/
 
-
-
 #ifndef __LIBGATE_H
 #define __LIBGATE_H
 
@@ -74,10 +72,6 @@ typedef struct gate_str_s
 #define		GATE_STR_INIT		{ NULL, 0 }
 #define		GATE_TALKING_PROTOCOL	"# gate talking - protocol version 20130326"
 #define		GATE_TALKING		"# gate talking"
-
-#define 	GATE_LOGLEVEL		1
-
-#define		LOG(lvl, x...)		do { if (lvl <= GATE_LOGLEVEL) fprintf(stderr, x); } while (0)
 
 void		gate_set_port		(int port);
 void		gate_set_interface	(const char* interface);
@@ -106,6 +100,66 @@ const char*	gate_psend		(const char* s, ...) __attribute__((format(printf, 1, 2)
 
 int		gate_talking		(const char* recv);
 int		gate_talking_protocol	(const char* recv);
+
+/******************************************/
+/* debug info borrowed from libwebsockets */
+
+void		gate_lws_setloglevel	(int loglevel);
+
+#ifndef __LIBWEBSOCKET_H__
+enum lws_log_levels {
+	LLL_ERR = 1 << 0,
+	LLL_WARN = 1 << 1,
+	LLL_NOTICE = 1 << 2,
+	LLL_INFO = 1 << 3,
+	LLL_DEBUG = 1 << 4,
+	LLL_PARSER = 1 << 5,
+	LLL_HEADER = 1 << 6,
+	LLL_EXT = 1 << 7,
+	LLL_CLIENT = 1 << 8,
+	LLL_LATENCY = 1 << 9,
+
+	LLL_COUNT = 10 /* set to count of valid flags */
+};
+
+void _lws_log(int filter, const char *format, ...);
+
+/* notice, warn and log are always compiled in */
+#define lwsl_notice(...) _lws_log(LLL_NOTICE, __VA_ARGS__)
+#define lwsl_warn(...) _lws_log(LLL_WARN, __VA_ARGS__)
+#define lwsl_err(...) _lws_log(LLL_ERR, __VA_ARGS__)
+/*
+ *  weaker logging can be deselected at configure time using --disable-debug
+ *  that gets rid of the overhead of checking while keeping _warn and _err
+ *  active
+ */
+#if DEBUG
+
+#define lwsl_info(...) _lws_log(LLL_INFO, __VA_ARGS__)
+#define lwsl_debug(...) _lws_log(LLL_DEBUG, __VA_ARGS__)
+#define lwsl_parser(...) _lws_log(LLL_PARSER, __VA_ARGS__)
+#define lwsl_header(...)  _lws_log(LLL_HEADER, __VA_ARGS__)
+#define lwsl_ext(...)  _lws_log(LLL_EXT, __VA_ARGS__)
+#define lwsl_client(...) _lws_log(LLL_CLIENT, __VA_ARGS__)
+#define lwsl_latency(...) _lws_log(LLL_LATENCY, __VA_ARGS__)
+LWS_VISIBLE LWS_EXTERN void lwsl_hexdump(void *buf, size_t len);
+
+#else /* no debug */
+
+#define lwsl_info(...)
+#define lwsl_debug(...)
+#define lwsl_parser(...)
+#define lwsl_header(...)
+#define lwsl_ext(...)
+#define lwsl_client(...)
+#define lwsl_latency(...)
+#define lwsl_hexdump(a, b)
+
+#endif
+#endif // !__LIBWEBSOCKET_H__
+
+/*                                        */
+/******************************************/
 
 #ifdef __cplusplus
 }

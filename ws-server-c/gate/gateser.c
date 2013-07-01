@@ -204,15 +204,15 @@ int gate_serial_scan (void)
 		
 		if (gate_fd_dev_is_opened(dev) == 0)
 		{
-			LOG(4, "not trying to reopen '%s'\n", dev);
+			lwsl_notice("not trying to reopen '%s'\n", dev);
 			continue;
 		}
 
-		LOG(3, "try open serial device '%s' (%s/%s/%s)...\n", dev, value_speed, value_type, value_device);
+		lwsl_notice("try open serial device '%s' (%s/%s/%s)...\n", dev, value_speed, value_type, value_device);
 		
 		if (dev_lock(dev) != 0)
 		{
-			LOG(4, "serial device '%s' already locked\n", dev);
+			lwsl_notice("serial device '%s' already locked\n", dev);
 			continue;
 		}
 
@@ -224,11 +224,11 @@ int gate_serial_scan (void)
 			continue;
 		}
 		
-		LOG(3, "serial device '%s' opened, fd=%i - trying %s/%s\n", dev, fd, value_type, value_speed);
+		lwsl_notice("serial device '%s' opened, fd=%i - trying %s/%s\n", dev, fd, value_type, value_speed);
 		
 		if (tcgetattr(fd, &tio) == -1)
 		{
-			LOG(3, "serial/tcgetattr: %s\n", strerror(errno));
+			lwsl_notice("serial/tcgetattr: %s\n", strerror(errno));
 			close(fd);
 			dev_unlock(dev, getpid());
 			continue;

@@ -86,15 +86,17 @@ void help (const char* arg0, int exitcode)
 	fprintf(stderr,
 		"%s v%s - i/o multiplexer for websocket (tcp, serial)\n"
 		"options are:\n"
-		"	-w|--ws=<n>	websocket port (default %i)\n"
-		"	-t|--tcp=<n>	tcp port (default %i)\n"
-		"	-d|--daemon	daemonize, no console interaction\n"
-		"	-s		use serial devices with default parameter (*1)\n"
+		"	-w|--ws=<n>		websocket port (default %i)\n"
+		"	-t|--tcp=<n>		tcp port (default %i)\n"
+		"	-d|--daemon		daemonize, no console interaction\n"
+		"	-s			use serial devices with default parameter (*1)\n"
 		"	-h|--help\n"
-		"	--serial=<devs>	serial devices (*1)\n"
+		"	   --serial=<devs>	serial devices (*1)\n"
+		"	-l|--loglevel		1=err|2=warn|4=notice|8=info|16=debug (*2)\n"
 		"\n"
 		" (*1) optional serial parameter format is 'baud1[,baud2...]#8n1[,7e2...]#ttyUSB0[,ttyACM1...]'\n"
 		"      default serial parameter is '%s'\n"
+		" (*2) any combination (add those you need)\n"
 		"\n"
 	       , arg0, VERSION, GATE_DEFAULT_PORT_WS, PORT_TCP, default_serial);
 	exit(exitcode);
@@ -108,10 +110,11 @@ int main (int argc, char *argv[])
 	int port_ws = GATE_DEFAULT_PORT_WS;
 	int daemon = 0;
 	int tcp = 0; // tcp server socket
+	int loglevel = 0;
 
 	while (1) 
 	{
-		int n = getopt_long(argc, argv, "hw:t:s;d", options, NULL);
+		int n = getopt_long(argc, argv, "hw:t:s;l:d", options, NULL);
 		if (n < 0)
 			break;
 		switch (n)
@@ -128,6 +131,9 @@ int main (int argc, char *argv[])
 		case 'd':
 			daemon = 1;
 			break;
+		case 'l':
+			loglevel = atoi(optarg);
+			break;
 		case 'h':
 			help(argv[0], EXIT_SUCCESS);
 		}
@@ -135,6 +141,8 @@ int main (int argc, char *argv[])
 
 	if (gate_init(GATE_WS_PROTOCOL) != 0)
 		exit(1);
+	
+	gate_lws_setloglevel(loglevel);
 	
 printf("port=%i\n",port_ws);
 	gate_set_port(port_ws);

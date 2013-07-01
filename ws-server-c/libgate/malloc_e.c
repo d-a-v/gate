@@ -53,6 +53,7 @@
 
 #include <stdio.h>
 
+#include "libgate.h"
 #include "malloc_e.h"
 
 void* malloc_e (size_t s, const char* what)
@@ -60,7 +61,7 @@ void* malloc_e (size_t s, const char* what)
 	void* ret = malloc(s);
 	if (!ret)
 	{
-		fprintf(stderr, "cannot allocate %li bytes for '%s'\n", (long)s, what);
+		lwsl_err("cannot allocate %li bytes for '%s'\n", (long)s, what);
 		exit(EXIT_FAILURE);
 	}
 	return ret;

@@ -137,8 +137,8 @@ int gate_fd_receive (int fdindex)
 			gate_str_grow(&fd->current_from_peer, REASONABLE);
 		
 		len = read(fd->fd, fd->current_from_peer.str + pre, fd->current_from_peer.alloked - pre);
-		LOG(4, "%i has been read(fd=%i) (%li asked)\n", len, fd->fd, (long)(fd->current_from_peer.alloked - pre));
-		if (GATE_LOGLEVEL >= 5 && len > 0) { int i; fprintf(stderr, "read:('"); for (i = 0; i < len; i++) fprintf(stderr, "%c", *(fd->current_from_peer.str + pre + i)); fprintf(stderr, "')\n"); }
+		lwsl_info("%i has been read(fd=%i) (%li asked)\n", len, fd->fd, (long)(fd->current_from_peer.alloked - pre));
+		if (len > 0) { int i; lwsl_debug("read:('"); for (i = 0; i < len; i++) lwsl_debug("%c", *(fd->current_from_peer.str + pre + i)); lwsl_debug("')\n"); }
 		
 		if (len == 0 || (len == -1 && errno != EAGAIN && errno != EWOULDBLOCK))
 		{
@@ -157,7 +157,7 @@ int gate_fd_receive (int fdindex)
 
 			fd->current_from_peer.str[len += pre] = 0;
 
-			LOG(4, "processing %i more chars, total='%s'\n", len, fd->current_from_peer.str);
+			lwsl_info("processing %i more chars, total='%s'\n", len, fd->current_from_peer.str);
 
 			// chop and store
 			start = end = fd->current_from_peer.str;
@@ -165,13 +165,13 @@ int gate_fd_receive (int fdindex)
 			{
 				if (!*end) // no endline received
 				{
-					LOG(4, "updating '%s' for fifo(fd=%i dev='%s')\n", start, fd->fd, fd->dev? fd->dev: "");
+					lwsl_info("updating '%s' for fifo(fd=%i dev='%s')\n", start, fd->fd, fd->dev? fd->dev: "");
 					memmove(fd->current_from_peer.str, start, end - start + 1);
 					break;
 				}
 				if (*end == '\n' || *end == '\r')
 				{
-					LOG(4, "adding '%s' on fifo(fd=%i dev='%s')\n", start, fd->fd, fd->dev? fd->dev: "");
+					lwsl_info("adding '%s' on fifo(fd=%i dev='%s')\n", start, fd->fd, fd->dev? fd->dev: "");
 					*end = 0;
 					if (end != start)
 						fifo_add(fd->from_peer, start);
@@ -284,7 +284,7 @@ int gate_fd_dev_is_opened (const char* dev)
 
 static void atexit_fdclose (void)
 {
-	LOG(1, "cleaning fd...\n");
+	lwsl_info("cleaning fd...\n");
 	while (fdlen)
 		gate_fd_close(0);
 }
