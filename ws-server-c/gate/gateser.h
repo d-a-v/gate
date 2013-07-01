@@ -55,5 +55,6 @@
 
 int gate_serial_parse (const char* serial_descr);
 int gate_serial_scan (void);
+void gate_close_unlock (const char* dev, int fd);
 
 #endif // __GATE_SER_H

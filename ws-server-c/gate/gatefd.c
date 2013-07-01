@@ -60,6 +60,7 @@
 #include <lockdev.h>
 
 #include "gatefd.h"
+#include "gateser.h"
 #include "libgate.h"
 #include "malloc_e.h"
 
@@ -259,13 +260,14 @@ void gate_fd_close (int fdindex)
 {
 	fd_t* fd = &fds[fdindex];
 	gate_del_pollfd(fd->fd);
-	close(fd->fd);
+	if (fd->flags & FDF_NEEDUNLOCK)
+		gate_close_unlock(fd->dev, fd->fd);
+	else
+		close(fd->fd);
 	fifo_destroy(&fd->from_peer);
 	fifo_destroy(&fd->to_peer);
 	gate_str_free(&fd->current_from_peer);
 	
-	if (fd->flags & FDF_NEEDUNLOCK)
-		dev_unlock(fd->dev, getpid());
 
 	memmove(fd, &fds[--fdlen], sizeof(fd_t));
 }

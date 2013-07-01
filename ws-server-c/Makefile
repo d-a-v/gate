@@ -29,6 +29,12 @@ GWT	= ../ws-client-gwt/war/gate/index.html
 ARFLAGS	= rcs
 LIBS	= -Llibgate -lgate $(WS)/lib/$(WS).a -Wl,-Bstatic -llockdev -Wl,-Bdynamic -lssl
 
+ifeq ($(shell test -r /usr/include/lockdev.h && echo ok),ok)
+CFLAGS	+= -DHAVE_LOCKDEV=1
+else
+$(shell echo "$(warning notice: lockdev is not installed (pkg liblockdev-dev))")
+endif
+
 ###############
 
 

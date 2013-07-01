@@ -60,8 +60,11 @@
 #include <errno.h>
 #include <termios.h>
 #include <unistd.h>
+#include <sys/file.h>
 
+#if HAVE_LOCKDEV
 #include <lockdev.h>
+#endif
                             
 #include "libgate.h"
 #include "gatefd.h"
@@ -80,6 +83,43 @@ static fifo_iterator_t it_speed, it_type, it_device;
 static const char* value_speed;
 static const char* value_type;
 static const char* value_device;
+
+static int lock_before_open (const char* dev)
+{
+#ifdev HAVE_LOCKDEV
+	if (dev_lock(dev) != 0)
+	{
+		lwsl_notice("serial device '%s' already locked\n", dev);
+		return -1;
+	}
+#else
+	(void)dev;
+#endif
+	
+	return 0;
+}
+
+static int lock_after_open (const char* dev, int fd)
+{
+	if (flock(fd, LOCK_EX | LOCK_NB) != 0)
+	{
+		lwsl_notice("serial device '%s' already locked (%s)\n", dev, strerror(errno));
+		close(fd);
+		return -1;
+	}
+	
+	return 0;
+}
+
+void gate_close_unlock (const char* dev, int fd)
+{
+#ifdef HAVE_LOCKDEV
+	dev_unlock(dev, getpid());
+#endif
+	
+	if (flock(fd, LOCK_UN) != 0)
+		lwsl_notice("error unlocking serial device '%s': %s\n", dev, strerror(errno));
+}
 
 static void clean (void)
 {
@@ -210,11 +250,8 @@ int gate_serial_scan (void)
 
 		lwsl_notice("try open serial device '%s' (%s/%s/%s)...\n", dev, value_speed, value_type, value_device);
 		
-		if (dev_lock(dev) != 0)
-		{
-			lwsl_notice("serial device '%s' already locked\n", dev);
+		if (lock_before_open(dev) != 0)
 			continue;
-		}
 
 		int fd = open(dev, O_RDWR);
 		if (fd == -1)
@@ -224,13 +261,15 @@ int gate_serial_scan (void)
 			continue;
 		}
 		
+		if (lock_after_open(dev, fd) != 0)
+			continue; // closed
+		
 		lwsl_notice("serial device '%s' opened, fd=%i - trying %s/%s\n", dev, fd, value_type, value_speed);
 		
 		if (tcgetattr(fd, &tio) == -1)
 		{
 			lwsl_notice("serial/tcgetattr: %s\n", strerror(errno));
-			close(fd);
-			dev_unlock(dev, getpid());
+			gate_close_unlock(dev, fd);
 			continue;
 		}
 
@@ -247,8 +286,7 @@ int gate_serial_scan (void)
 		case 2400: tio.c_cflag |= B2400; break;
 		default:
 			fprintf(stderr, "invalid serial speed '%s'\n", value_speed);
-			close(fd); 
-			dev_unlock(dev, getpid());
+			gate_close_unlock(dev, fd);
 			continue;
 		}
 		
@@ -260,8 +298,7 @@ int gate_serial_scan (void)
 		case 5: tio.c_cflag |= CS5; break;
 		default:
 			fprintf(stderr, "invalid serial data size '%c' in '%s'\n", value_type[0], value_type);
-			close(fd); 
-			dev_unlock(dev, getpid());
+			gate_close_unlock(dev, fd); 
 			continue;
 		}
 		
@@ -273,8 +310,7 @@ int gate_serial_scan (void)
 		case 'o': tio.c_cflag |= PARENB | PARODD; break;
 		default:
 			fprintf(stderr, "invalid serial parity '%c' in '%s'\n", value_type[1], value_type);
-			close(fd); 
-			dev_unlock(dev, getpid());
+			gate_close_unlock(dev, fd); 
 			continue;
 		}
 		
@@ -285,7 +321,7 @@ int gate_serial_scan (void)
 		default:
 			fprintf(stderr, "invalid serial stop bit '%c' in '%s'\n", value_type[2], value_type);
 			close(fd); 
-			dev_unlock(dev, getpid());
+			gate_close_unlock(dev, fd);
 			continue;
 		}
 		
@@ -300,7 +336,7 @@ int gate_serial_scan (void)
 		{
 			perror(GATE_PERROR_HEADER "tcflush");
 			close(fd);
-			dev_unlock(dev, getpid());
+			gate_close_unlock(dev, fd);
 			continue;
 		}
 
@@ -309,7 +345,7 @@ int gate_serial_scan (void)
 		{
 			perror(GATE_PERROR_HEADER "serial/tcsetattr");
 			close(fd);
-			dev_unlock(dev, getpid());
+			gate_close_unlock(dev, fd);
 			continue;
 		}
 		
@@ -318,7 +354,7 @@ int gate_serial_scan (void)
 		if (fdindex < 0)
 		{
 			close(fd);
-			dev_unlock(dev, getpid());
+			gate_close_unlock(dev, fd);
 			continue;
 		}
 		strcpy(gate_fd(fdindex)->dev, dev);
