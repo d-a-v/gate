@@ -92,7 +92,6 @@ enum demo_protocols {
 
 
 
-//#define LOCAL_RESOURCE_PATH "/home/gauchard/workspace/gate/ws-server-c/libwebsockets/test-server"
 #define LOCAL_RESOURCE_PATH INSTALL_DATADIR"/libwebsockets-test-server"
 char *resource_path = LOCAL_RESOURCE_PATH;
 
@@ -140,17 +139,18 @@ static int callback_http(struct libwebsocket_context *context,
 	int ret;
 #else /* !EMBEDDED */
 	char buf[256];
+	char leaf_path[1024];
 	int n;
 	unsigned char *p;
 	static unsigned char buffer[4096];
 	struct stat stat_buf;
-	struct per_session_data__http *pss = (struct per_session_data__http *)user;
+	struct per_session_data__http *pss =
+			(struct per_session_data__http *)user;
 #endif /* !EMBEDDED */
 
 #ifdef EXTERNAL_POLL
 	int fd = (int)(long)in;
 #endif
-
 
 	switch (reason) {
 
@@ -218,7 +218,6 @@ static int callback_http(struct libwebsocket_context *context,
 
 		/* process special case from test.html in this callback */
 		if (!strcmp((const char *)in, "/leaf-usercb.jpg")) {
-			char leaf_path[1024];
 			snprintf(leaf_path, sizeof(leaf_path), "%s/leaf.jpg", resource_path);
 
 			/* well, let's demonstrate how to send the hard way */
@@ -814,8 +813,18 @@ int main(int argc, char **argv)
 		info.ssl_cert_filepath = NULL;
 		info.ssl_private_key_filepath = NULL;
 	} else {
-		snprintf(cert_path, sizeof(cert_path), "%s/libwebsockets-test-server.pem", resource_path);
-		snprintf(key_path, sizeof(cert_path), "%s/libwebsockets-test-server.key.pem", resource_path);
+		if (strlen(resource_path) > sizeof(cert_path) - 32) {
+			lwsl_err("resource path too long\n");
+			return -1;
+		}
+		sprintf(cert_path, "%s/libwebsockets-test-server.pem",
+								resource_path);
+		if (strlen(resource_path) > sizeof(key_path) - 32) {
+			lwsl_err("resource path too long\n");
+			return -1;
+		}
+		sprintf(key_path, "%s/libwebsockets-test-server.key.pem",
+								resource_path);
 
 		info.ssl_cert_filepath = cert_path;
 		info.ssl_private_key_filepath = key_path;

@@ -206,10 +206,12 @@ libwebsocket_close_and_free_session(struct libwebsocket_context *context,
 
 	wsi->u.ws.close_reason = reason;
 
-	if (wsi->mode == LWS_CONNMODE_HTTP_SERVING && wsi->u.http.fd) {
+	if (wsi->mode == LWS_CONNMODE_HTTP_SERVING_ACCEPTED && wsi->u.http.fd) {
 		lwsl_debug("closing http fd %d\n", wsi->u.http.fd);
 		close(wsi->u.http.fd);
 		wsi->u.http.fd = 0;
+		context->protocols[0].callback(context, wsi,
+			LWS_CALLBACK_CLOSED_HTTP, wsi->user_space, NULL, 0);
 	}
 
 #ifndef LWS_NO_EXTENSIONS
@@ -368,6 +370,10 @@ just_kill_connection:
 		lwsl_debug("calling back CLOSED\n");
 		wsi->protocol->callback(context, wsi, LWS_CALLBACK_CLOSED,
 						      wsi->user_space, NULL, 0);
+	} else if ( wsi->mode == LWS_CONNMODE_HTTP_SERVING_ACCEPTED ) {
+		lwsl_debug("calling back CLOSED_HTTP\n");
+		context->protocols[0].callback(context, wsi,
+			LWS_CALLBACK_CLOSED_HTTP, wsi->user_space, NULL, 0 );
 	} else
 		lwsl_debug("not calling back closed\n");
 
@@ -452,7 +458,7 @@ libwebsockets_get_peer_addresses(struct libwebsocket_context *context,
 	struct libwebsocket *wsi, int fd, char *name, int name_len,
 					char *rip, int rip_len)
 {
-	unsigned int len;
+	socklen_t len;
 	struct sockaddr_in sin;
 	struct hostent *host;
 	struct hostent *host1;
@@ -554,7 +560,7 @@ int lws_set_socket_options(struct libwebsocket_context *context, int fd)
 					     (const void *)&optval, optlen) < 0)
 			return 1;
 
-#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__CYGWIN__)
 
 		/*
 		 * didn't find a way to set these per-socket, need to
@@ -962,6 +968,7 @@ libwebsocket_service_fd(struct libwebsocket_context *context,
 
 #ifndef LWS_NO_SERVER
 	case LWS_CONNMODE_HTTP_SERVING:
+	case LWS_CONNMODE_HTTP_SERVING_ACCEPTED:
 	case LWS_CONNMODE_SERVER_LISTENER:
 	case LWS_CONNMODE_SSL_ACK_PENDING:
 		n = lws_server_socket_service(context, wsi, pollfd);
@@ -973,7 +980,7 @@ libwebsocket_service_fd(struct libwebsocket_context *context,
 
 		/* handle session socket closed */
 
-		if ((!pollfd->revents & POLLIN) &&
+		if ((!(pollfd->revents & POLLIN)) &&
 				(pollfd->revents & (POLLERR | POLLHUP))) {
 
 			lwsl_debug("Session Socket %p (fd=%d) dead\n",

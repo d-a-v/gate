@@ -29,7 +29,10 @@
 #include <string.h>
 #include <sys/time.h>
 #include <assert.h>
+#ifdef WIN32
+#else
 #include <syslog.h>
+#endif
 #include <signal.h>
 
 #ifdef CMAKE_BUILD
@@ -69,7 +72,7 @@ callback_echo(struct libwebsocket_context *context,
 			lwsl_err("ERROR %d writing to socket, hanging up\n", n);
 			return 1;
 		}
-		if (n < pss->len) {
+		if (n < (int)pss->len) {
 			lwsl_err("Partial write\n");
 			return -1;
 		}
@@ -81,7 +84,7 @@ callback_echo(struct libwebsocket_context *context,
 			return 1;
 		}
 		memcpy(&pss->buf[LWS_SEND_BUFFER_PRE_PADDING], in, len);
-		pss->len = len;
+		pss->len = (unsigned int)len;
 		libwebsocket_callback_on_writable(context, wsi);
 		break;
 #endif
@@ -107,7 +110,7 @@ callback_echo(struct libwebsocket_context *context,
 			lwsl_err("ERROR %d writing to socket, hanging up\n", n);
 			return -1;
 		}
-		if (n < pss->len) {
+		if (n < (int)pss->len) {
 			lwsl_err("Partial write\n");
 			return -1;
 		}
@@ -165,7 +168,9 @@ int main(int argc, char **argv)
 	int opts = 0;
 	char interface_name[128] = "";
 	const char *interface = NULL;
+#ifndef WIN32
 	int syslog_options = LOG_PID | LOG_PERROR;
+#endif
 	int client = 0;
 	int listen_port;
 	struct lws_context_creation_info info;
@@ -202,7 +207,9 @@ int main(int argc, char **argv)
 #ifndef LWS_NO_DAEMONIZE
 		case 'D':
 			daemonize = 1;
+#ifndef WIN32
 			syslog_options &= ~LOG_PERROR;
+#endif
 			break;
 #endif
 #ifndef LWS_NO_CLIENT
@@ -255,13 +262,15 @@ int main(int argc, char **argv)
 	}
 #endif
 
+#ifdef WIN32
+#else
 	/* we will only try to log things according to our debug_level */
 	setlogmask(LOG_UPTO (LOG_DEBUG));
 	openlog("lwsts", syslog_options, LOG_DAEMON);
 
 	/* tell the library what debug level to emit and to send it to syslog */
 	lws_set_log_level(debug_level, lwsl_emit_syslog);
-
+#endif
 	lwsl_notice("libwebsockets echo test - "
 			"(C) Copyright 2010-2013 Andy Green <andy@warmcat.com> - "
 						    "licensed under LGPL2.1\n");
@@ -326,7 +335,7 @@ int main(int argc, char **argv)
 		if (client) {
 			gettimeofday(&tv, NULL);
 
-			if (((unsigned int)tv.tv_usec - oldus) > rate_us) {
+			if (((unsigned int)tv.tv_usec - oldus) > (unsigned int)rate_us) {
 				libwebsocket_callback_on_writable_all_protocol(&protocols[0]);
 				oldus = tv.tv_usec;
 			}
@@ -340,8 +349,10 @@ bail:
 	libwebsocket_context_destroy(context);
 
 	lwsl_notice("libwebsockets-test-echo exited cleanly\n");
-
+#ifdef WIN32
+#else
 	closelog();
+#endif
 
 	return 0;
 }

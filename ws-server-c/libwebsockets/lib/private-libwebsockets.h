@@ -57,6 +57,9 @@
 
 #ifdef WIN32
 #define LWS_NO_DAEMONIZE
+#ifndef EWOULDBLOCK
+#define EWOULDBLOCK EAGAIN
+#endif
 
 #define compatible_close(fd) closesocket(fd);
 #ifdef __MINGW64__
@@ -208,6 +211,7 @@ enum lws_rx_parse_state {
 
 enum connection_mode {
 	LWS_CONNMODE_HTTP_SERVING,
+	LWS_CONNMODE_HTTP_SERVING_ACCEPTED, /* actual HTTP service going on */
 	LWS_CONNMODE_PRE_WS_SERVING_ACCEPT,
 
 	LWS_CONNMODE_WS_SERVING,
@@ -306,7 +310,7 @@ enum pending_timeout {
 
 struct _lws_http_mode_related {
 	int fd;
-	const unsigned char* bin;
+	const unsigned char* bin; 	/* NULL if fd is used */
 	unsigned long filepos;
 	unsigned long filelen;
 };

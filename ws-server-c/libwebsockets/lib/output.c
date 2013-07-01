@@ -311,7 +311,7 @@ LWS_VISIBLE int libwebsocket_write(struct libwebsocket *wsi, unsigned char *buf,
 	int m;
 #endif
 
-	if (len == 0 && protocol != LWS_WRITE_CLOSE) {
+	if (len == 0 && protocol != LWS_WRITE_CLOSE && protocol != LWS_WRITE_PING && protocol != LWS_WRITE_PONG) {
 		lwsl_warn("zero length libwebsocket_write attempt\n");
 		return 0;
 	}
@@ -541,7 +541,7 @@ LWS_VISIBLE int libwebsockets_serve_http_file_fragment(
 			wsi->state = WSI_STATE_HTTP;
 
 			if (wsi->protocol->callback)
-				/* ignore callback return value */
+				/* ignore callback returned value */
 				user_callback_handle_rxflow(
 					wsi->protocol->callback, context, wsi,
 					LWS_CALLBACK_HTTP_FILE_COMPLETION,
@@ -595,6 +595,7 @@ static int libwebsockets_serve_http_bin_or_file(struct libwebsocket_context *con
 		);
 
 		if (wsi->u.http.fd < 1) {
+			lwsl_err("Unable to open '%s'\n", file);
 			p += sprintf((char *)p,
 			 "HTTP/1.0 400 Bad\x0d\x0aServer: libwebsockets\x0d\x0a\x0d\x0a"
 			);

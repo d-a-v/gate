@@ -44,14 +44,16 @@ extern "C" {
 
 typedef int ssize_t;
 
+#define LWS_VISIBLE
+
 #ifdef LWS_DLL
 #ifdef LWS_INTERNAL
-#define LWS_VISIBLE
 #define LWS_EXTERN extern __declspec(dllexport)
 #else
-#define LWS_VISIBLE
 #define LWS_EXTERN extern __declspec(dllimport)
 #endif
+#else
+#define LWS_EXTERN
 #endif
 
 #else // NOT WIN32
@@ -136,6 +138,7 @@ enum libwebsocket_callback_reasons {
 	LWS_CALLBACK_CLIENT_FILTER_PRE_ESTABLISH,
 	LWS_CALLBACK_CLIENT_ESTABLISHED,
 	LWS_CALLBACK_CLOSED,
+	LWS_CALLBACK_CLOSED_HTTP,
 	LWS_CALLBACK_RECEIVE,
 	LWS_CALLBACK_CLIENT_RECEIVE,
 	LWS_CALLBACK_CLIENT_RECEIVE_PONG,
@@ -416,6 +419,8 @@ struct libwebsocket_extension;
  *				a handshake with the remote server
  *
  *	LWS_CALLBACK_CLOSED: when the websocket session ends
+ *
+ *	LWS_CALLBACK_CLOSED_HTTP: when a HTTP (non-websocket) session ends
  *
  *	LWS_CALLBACK_RECEIVE: data has appeared for this server endpoint from a
  *				remote client, it can be found at *in and is
@@ -870,10 +875,11 @@ LWS_VISIBLE LWS_EXTERN int
 libwebsockets_serve_http_file(struct libwebsocket_context *context,
 			struct libwebsocket *wsi, const char *file,
 						     const char *content_type);
+
 LWS_VISIBLE LWS_EXTERN int
 libwebsockets_serve_http_bin(struct libwebsocket_context *context,
-			struct libwebsocket *wsi, const unsigned char *bin, size_t bin_size,
-						       const char *content_type);
+			struct libwebsocket *wsi, const unsigned char *bin,
+				size_t bin_size, const char *content_type);
 
 LWS_VISIBLE LWS_EXTERN int
 libwebsockets_serve_http_file_fragment(struct libwebsocket_context *context,

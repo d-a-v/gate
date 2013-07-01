@@ -126,7 +126,7 @@ int lws_server_socket_service(struct libwebsocket_context *context,
 {
 	struct libwebsocket *new_wsi;
 	int accept_fd;
-	unsigned int clilen;
+	socklen_t clilen;
 	struct sockaddr_in cli_addr;
 	int n;
 	ssize_t len;
@@ -140,6 +140,7 @@ int lws_server_socket_service(struct libwebsocket_context *context,
 	switch (wsi->mode) {
 
 	case LWS_CONNMODE_HTTP_SERVING:
+	case LWS_CONNMODE_HTTP_SERVING_ACCEPTED:
 
 		/* handle http headers coming in */
 
