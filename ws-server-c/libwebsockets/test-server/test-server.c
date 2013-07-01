@@ -52,6 +52,10 @@
 
 #include "../lib/libwebsockets.h"
 
+#ifdef EMBEDDED
+#include "embedded.c"
+#endif
+
 static int close_testing;
 int max_poll_elements;
 
@@ -87,6 +91,8 @@ enum demo_protocols {
 };
 
 
+
+//#define LOCAL_RESOURCE_PATH "/home/gauchard/workspace/gate/ws-server-c/libwebsockets/test-server"
 #define LOCAL_RESOURCE_PATH INSTALL_DATADIR"/libwebsockets-test-server"
 char *resource_path = LOCAL_RESOURCE_PATH;
 
@@ -102,7 +108,7 @@ struct serveable {
 static const struct serveable whitelist[] = {
 	{ "/favicon.ico", "image/x-icon" },
 	{ "/libwebsockets.org-logo.png", "image/png" },
-
+	{ "/leaf.jpg", "image/jpg" },
 	/* last one is the default served if no match */
 	{ "/test.html", "text/html" },
 };
@@ -122,22 +128,96 @@ static int callback_http(struct libwebsocket_context *context,
 	char client_name[128];
 	char client_ip[128];
 #endif
+	int m;
+
+#ifdef EMBEDDED
+	static const unsigned char t404 [] = "nothing here";
+	static const binware_s w404 = { ".html", sizeof(t404), t404 };
+	const binware_s* bin;
+	const char* ext;
+	const char* content_type;
+	char* qmark;
+	int ret;
+#else /* !EMBEDDED */
 	char buf[256];
-	int n, m;
+	int n;
 	unsigned char *p;
 	static unsigned char buffer[4096];
 	struct stat stat_buf;
 	struct per_session_data__http *pss = (struct per_session_data__http *)user;
+#endif /* !EMBEDDED */
+
 #ifdef EXTERNAL_POLL
 	int fd = (int)(long)in;
 #endif
 
+
 	switch (reason) {
+
+#ifdef EMBEDDED
+
+	case LWS_CALLBACK_HTTP:
+
+		lwsl_info("HTTP URI: '%s'\n", (char *)in);
+		
+		/* cut at first '?' from end */
+		for (qmark = ((char*)in)+strlen(in); qmark != in && *qmark != '?'; qmark--);
+		if (*qmark == '?')
+			*qmark = 0;
+
+		/* URL aliases or search */
+		if (strcmp(in, "/") == 0)
+			in = "/test.html";
+		/* special case from test.html */
+		/* NO: useless, informative
+		if (strcmp(in, "/leaf-usercb.jpg") == 0)
+			in = "/leaf.jpg";
+		*/
+		for (bin = &binware_embedded[0]; bin->name; bin++)
+			if (strcmp(&((char*)in)[1], bin->name) == 0)
+				break;
+		/* ... or 404 */
+		if (!bin->name)
+			bin = &w404;
+
+		/* locate extension and set content-type */
+		for (ext = &bin->name[strlen(bin->name)]; ext != bin->name && *ext != '.'; ext--);
+		if (strcmp(ext, ".html") == 0)
+			content_type = "text/html";
+		else if (strcmp(ext, ".css") == 0)
+			content_type = "text/css";
+		else if (strcmp(ext, ".ico") == 0)
+			content_type = "image/vnd.microsoft.icon";
+		else if (strcmp(ext, ".js") == 0)
+			content_type = "text/javascript";
+		else
+			content_type = "";
+		
+		lwsl_info("serving '%s'\n", bin->name);
+		ret = libwebsockets_serve_http_bin(context, wsi, bin->data, bin->size, content_type);
+		if (ret) {
+			if (ret < 0)
+				lwsl_info("Failed to send HTTP file\n");
+			/* ret > 0 indicates finished */
+			return -1; /* close */
+		}
+
+		break;
+
+	case LWS_CALLBACK_HTTP_WRITEABLE:
+		lwsl_info("LWS_CALLBACK_HTTP_WRITEABLE seen (SHOULD NOT HAPPEN IN EMBEDDED?)\n");
+		break;
+
+#else /* !EMBEDDED */
+
 	case LWS_CALLBACK_HTTP:
 
 		/* check for the "send a big file by hand" example case */
 
-		if (!strcmp((const char *)in, "/leaf.jpg")) {
+		lwsl_info("HTTP URI: '%s'\n", (char *)in);
+
+		/* process special case from test.html in this callback */
+		if (!strcmp((const char *)in, "/leaf-usercb.jpg")) {
 			char leaf_path[1024];
 			snprintf(leaf_path, sizeof(leaf_path), "%s/leaf.jpg", resource_path);
 
@@ -150,7 +230,6 @@ static int callback_http(struct libwebsocket_context *context,
 #else
 			pss->fd = open(leaf_path, O_RDONLY);
 #endif
-
 			if (pss->fd < 0)
 				return -1;
 
@@ -209,21 +288,18 @@ static int callback_http(struct libwebsocket_context *context,
 
 		break;
 
-	case LWS_CALLBACK_HTTP_FILE_COMPLETION:
-//		lwsl_info("LWS_CALLBACK_HTTP_FILE_COMPLETION seen\n");
-		/* kill the connection after we sent one file */
-		return -1;
-
 	case LWS_CALLBACK_HTTP_WRITEABLE:
 		/*
 		 * we can send more of whatever it is we were sending
 		 */
-
+		lwsl_info("LWS_CALLBACK_HTTP_WRITEABLE seen\n");
 		do {
 			n = read(pss->fd, buffer, sizeof buffer);
 			/* problem reading, close conn */
-			if (n < 0)
+			if (n < 0) {
+				lwsl_info("LWS_CALLBACK_HTTP_WRITEABLE: problem reading\n");
 				goto bail;
+			}
 			/* sent it all, close conn */
 			if (n == 0)
 				goto bail;
@@ -232,9 +308,11 @@ static int callback_http(struct libwebsocket_context *context,
 			 * care about pre and postamble
 			 */
 			m = libwebsocket_write(wsi, buffer, n, LWS_WRITE_HTTP);
-			if (m < 0)
+			if (m < 0) {
 				/* write failed, close conn */
+				lwsl_info("LWS_CALLBACK_HTTP_WRITEABLE: problem writing\n");
 				goto bail;
+			}
 			if (m != n)
 				/* partial write, adjust */
 				lseek(pss->fd, m - n, SEEK_CUR);
@@ -245,6 +323,13 @@ static int callback_http(struct libwebsocket_context *context,
 
 bail:
 		close(pss->fd);
+		return -1;
+
+#endif /* !EMBEDDED */
+
+	case LWS_CALLBACK_HTTP_FILE_COMPLETION:
+		lwsl_info("LWS_CALLBACK_HTTP_FILE_COMPLETION seen\n");
+		/* kill the connection after we sent one file */
 		return -1;
 
 	/*

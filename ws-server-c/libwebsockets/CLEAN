@@ -1,1 +1,1 @@
-rm -rf bin CMakeCache.txt CMakeFiles cmake_install.cmake CPackConfig.cmake CPackSourceConfig.cmake doc libwebsockets.pc libwebsockets-test-server.key.pem libwebsockets-test-server.pem lws_config.h Makefile share
+rm -rf bin CMakeCache.txt CMakeFiles cmake_install.cmake CPackConfig.cmake CPackSourceConfig.cmake doc libwebsockets.pc libwebsockets-test-server.key.pem libwebsockets-test-server.pem lws_config.h Makefile share lib/libwebsockets.{a,so*} test-server/embedded.{c,h}

@@ -504,7 +504,6 @@ send_raw:
 LWS_VISIBLE int libwebsockets_serve_http_file_fragment(
 		struct libwebsocket_context *context, struct libwebsocket *wsi)
 {
-	int ret = 0;
 	int n, m;
 
 	while (!lws_send_pipe_choked(wsi)) {
@@ -513,7 +512,7 @@ LWS_VISIBLE int libwebsockets_serve_http_file_fragment(
 
 			if (n > (wsi->u.http.filelen - wsi->u.http.filepos))
 				n = wsi->u.http.filelen - wsi->u.http.filepos;
-
+			/* copy must be done, PADDING is needed before and after buffer */
 			memcpy(context->service_buffer, wsi->u.http.bin + wsi->u.http.filepos, n);
 
 		} else {
@@ -524,6 +523,7 @@ LWS_VISIBLE int libwebsockets_serve_http_file_fragment(
 		}
 
 		if (n > 0) {
+			// test: m = libwebsocket_write(wsi, context->service_buffer, n>1? n-1: n,
 			m = libwebsocket_write(wsi, context->service_buffer, n,
 								LWS_WRITE_HTTP);
 			if (m < 0)
@@ -531,27 +531,29 @@ LWS_VISIBLE int libwebsockets_serve_http_file_fragment(
 
 			wsi->u.http.filepos += m;
 
+			/* adjust for what was not sent */
 			if (m != n && !wsi->u.http.bin)
-				/* adjust for what was not sent */
 				lseek(wsi->u.http.fd, m - n, SEEK_CUR);
 		}
 
-		if (n < sizeof(context->service_buffer) || wsi->u.http.filepos == wsi->u.http.filelen) {
+		/* eof? */
+		if (wsi->u.http.filepos == wsi->u.http.filelen) {
 			wsi->state = WSI_STATE_HTTP;
 
 			if (wsi->protocol->callback)
-				ret = user_callback_handle_rxflow(
+				/* ignore callback return value */
+				user_callback_handle_rxflow(
 					wsi->protocol->callback, context, wsi,
 					LWS_CALLBACK_HTTP_FILE_COMPLETION,
 					wsi->user_space, NULL, 0);
-			return ret;
+			return 1; /* >0 indicates completed */
 		}
 	}
 
 	lwsl_notice("choked before able to send whole file (post)\n");
 	libwebsocket_callback_on_writable(context, wsi);
 
-	return ret;
+	return 0; /* indicates further processing must be done */
 }
 
 /**

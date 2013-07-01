@@ -43,6 +43,7 @@ option(LINK_TESTAPPS_DYNAMIC "Link the test apps to the shared version of the li
 option(WITHOUT_TESTAPPS "Don't build the libwebsocket-test-apps" OFF)
 option(WITHOUT_TEST_SERVER "Don't build the test server" OFF)
 option(WITHOUT_TEST_SERVER_EXTPOLL "Don't build the test server version that uses external poll" OFF)
+option(WITHOUT_TEST_SERVER_EXTPOLL_EMBED "Don't build the test server version that uses external poll and embedded binaries" OFF)
 option(WITHOUT_TEST_PING "Don't build the ping test application" OFF)
 option(WITHOUT_TEST_CLIENT "Don't build the client test application" OFF)
 option(WITHOUT_TEST_FRAGGLE "Don't build the ping test application" OFF)
@@ -554,6 +555,36 @@ if (NOT WITHOUT_TESTAPPS)
 			# We need to link against winsock code.
 			if (WIN32)
 				target_link_libraries(test-server-extpoll ws2_32.lib)
+			endif(WIN32)
+		endif()
+
+		#
+		# test-server-extpoll-embed
+		#
+		if (NOT WITHOUT_TEST_SERVER_EXTPOLL_EMBED)
+
+			# rawc
+
+			create_test_app(rawc "test-server/rawc.c" "" "")
+
+			# server
+
+			create_test_app(test-server-extpoll-embed
+				"test-server/test-server.c"
+				"win32port/win32helpers/websock-w32.c"
+				"${WIN32_HELPERS_PATH}/netdb.h;${WIN32_HELPERS_PATH}/strings.h;${WIN32_HELPERS_PATH}/unistd.h;${WIN32_HELPERS_PATH}/websock-w32.h")
+			# Set defines for this executable only.
+			set_property(
+				TARGET test-server-extpoll-embed
+				PROPERTY COMPILE_DEFINITIONS 
+					EXTERNAL_POLL 
+					INSTALL_DATADIR="${CMAKE_INSTALL_PREFIX}/share"
+					EMBEDDED
+				)
+
+			# We need to link against winsock code.
+			if (WIN32)
+				target_link_libraries(test-server-extpoll-embed ws2_32.lib)
 			endif(WIN32)
 		endif()
 
