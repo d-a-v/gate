@@ -86,7 +86,7 @@ static const char* value_device;
 
 static int lock_before_open (const char* dev)
 {
-#ifdev HAVE_LOCKDEV
+#ifdef HAVE_LOCKDEV
 	if (dev_lock(dev) != 0)
 	{
 		lwsl_notice("serial device '%s' already locked\n", dev);
