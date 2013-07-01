@@ -1,3 +1,0 @@
-#!/bin/sh
-
-../bin/libwebsockets-rawc embedded embedded favicon.ico leaf.jpg libwebsockets.org-logo.png test.html

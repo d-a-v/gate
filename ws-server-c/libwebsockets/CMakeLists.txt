@@ -567,6 +567,16 @@ if (NOT WITHOUT_TESTAPPS)
 
 			create_test_app(rawc "test-server/rawc.c" "" "")
 
+			# build embedded.c for test-server-extpoll-embed
+
+			add_custom_command(
+				TARGET rawc
+				POST_BUILD
+				COMMAND ../bin/libwebsockets-rawc embedded embedded favicon.ico leaf.jpg libwebsockets.org-logo.png test.html
+				WORKING_DIRECTORY test-server
+				COMMENT "building embedded binaries"
+			)
+
 			# server
 
 			create_test_app(test-server-extpoll-embed
@@ -586,6 +596,9 @@ if (NOT WITHOUT_TESTAPPS)
 			if (WIN32)
 				target_link_libraries(test-server-extpoll-embed ws2_32.lib)
 			endif(WIN32)
+
+
+
 		endif()
 
 		# Data files for running the test server.
