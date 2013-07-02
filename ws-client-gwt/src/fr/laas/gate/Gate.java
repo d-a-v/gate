@@ -989,8 +989,8 @@ public class Gate implements EntryPoint
                 removeConnectionItem(ws, index);
             ++index;
 	    }
-        
-        if (first)
+	    
+	    if (first)
         	remoteHistory.add(0, new WebSocketClient(wscb, h, appName));
         else
         	remoteHistory.add(new WebSocketClient(wscb, h, appName));
@@ -1081,11 +1081,9 @@ public class Gate implements EntryPoint
 	    }
 	}
 	
-static boolean blob = false;	
 	private void newConnection (String h)
 	{
-if (!blob) { blob = true; debug("finish me here"); }
-		if (true) //XXX check syntax, empty string etc
+		if (h != null) //XXX check syntax, empty string etc
 		{
 			addConnectionItem(h, true);
 			remoteLoginHistoryUpdate();
@@ -1178,10 +1176,10 @@ if (!blob) { blob = true; debug("finish me here"); }
 						+ "zz update xstep 1 xrangemax 30;"
 						+ "text add t2 text below rsmall text data;"
 						+ "remote_tryme_g add t3 gfx;"
-						+ "remote_tryme_g update add c circle 15 15 15;"
-						+ "remote_tryme_g update add d circle 85 15 15;"
-						+ "remote_tryme_g update add e circle 85 85 15;"
-						+ "remote_tryme_g update add l1 arrow 30 15 70 15;"
+						+ "remote_tryme_g update add c circle 15 15 15 enable c;"
+						+ "remote_tryme_g update add d circle 85 15 15 enable d;"
+						+ "remote_tryme_g update add e circle 85 85 15 enable e;"
+						+ "remote_tryme_g update add l1 arrow 30 15 70 15 enable l1;"
 						+ "remote_tryme_g update add l2 arrow 25.6 25.6 74.4 74.4;"
 						+ "remote_tryme_g update color l2 red;"
 						+ "remote_tryme_g update color l1 blue;"
@@ -1395,10 +1393,9 @@ if (!blob) { blob = true; debug("finish me here"); }
 		onResize_PPIfromHV();
 
 		remoteLoginWindowSetup();
-		
+
 		String server = Window.Location.getParameter("server");
-		debug("server parameter value is '" + server + "'");
-		if (!server.equals("undefined"))
-			newConnection(server);		
+		if (server != null && !server.equals("undefined"))
+				newConnection(server);
 	}
 }

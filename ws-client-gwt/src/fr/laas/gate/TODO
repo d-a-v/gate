@@ -2,6 +2,7 @@ using a ; (by mistake) in hostname breaks things
 arrange object help: give an example for each
 calibration window: update displayed values on resize
 add symbol (like '#') for comments in beginning of commands (when scripting)
+fix color and border color in gfx
 
 update parser in gfx:
 # error: graph update add r1 rectangle 0.000000 70.463112 12.499994 100.000000
