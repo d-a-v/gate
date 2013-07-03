@@ -130,6 +130,7 @@ class GuiGFX extends GuiPanel
 			+ Gate.endl + "# \t\t  - line      - x1 y1 x2 y2"
 			+ Gate.endl + "# \t\t  - arrow     - x1 y1 x2 y2"
 			+ Gate.endl + "# \t\t  - path      - x1 y1 x2 y2 [ x3 y3 [ ... ] ]"
+			+ Gate.endl + "# \t\t  - text      - x1 y1 yourText"
 			+ Gate.endl + "# \t\t* color is english/#rgb/#rrggbb[,opacity]"
 			+ Gate.endl + "# \t\t\tex: red,0.5 = #f00,0.5 = #ff0000,0.5"
 			+ Gate.endl + "# \t\t\tex: blue = blue,1 = #00f = #0000ff,1"
