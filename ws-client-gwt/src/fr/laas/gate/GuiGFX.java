@@ -244,6 +244,12 @@ class GuiGFX extends GuiPanel
 				((Ellipse)g.gfx).setStrokeOpacity(1);
 				((Ellipse)g.gfx).setFillOpacity(0);
 			}
+			else if (g.gfx instanceof Text)
+			{
+				((Text)g.gfx).setStrokeWidth(pixelWidth);
+				((Text)g.gfx).setStrokeOpacity(1);
+				((Text)g.gfx).setFillOpacity(1);
+			}
 			else
 			{
 				((Path)g.gfx).setStrokeWidth(pixelWidth);
@@ -286,7 +292,7 @@ class GuiGFX extends GuiPanel
 				else if (g.gfx instanceof Text)
 				{
 					((Text)g.gfx).setFillColor(color);
-					((Text)g.gfx).setFillOpacity(1);
+					((Text)g.gfx).setFillOpacity(opacity);
 				}
 				else // path
 				{
@@ -365,6 +371,7 @@ class GuiGFX extends GuiPanel
 			final Text t = (Text) g.gfx;
 			t.setX(x);
 			t.setY(y);
+			t.setFillOpacity(1);
 		}
 		
 		//XXX else bad bad bad ??		
