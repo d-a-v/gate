@@ -130,7 +130,9 @@ class GuiGFX extends GuiPanel
 			+ Gate.endl + "# \t\t  - line      - x1 y1 x2 y2"
 			+ Gate.endl + "# \t\t  - arrow     - x1 y1 x2 y2"
 			+ Gate.endl + "# \t\t  - path      - x1 y1 x2 y2 [ x3 y3 [ ... ] ]"
-			+ Gate.endl + "# \t\t* color is english/#rgb/#rrggbb like red/#f00/#ff0000"
+			+ Gate.endl + "# \t\t* color is english/#rgb/#rrggbb[,opacity]"
+			+ Gate.endl + "# \t\t\tex: red,0.5 = #f00,0.5 = #ff0000,0.5"
+			+ Gate.endl + "# \t\t\tex: blue = blue,1 = #00f = #0000ff,1"
 			;
 	}
 		
@@ -249,7 +251,6 @@ class GuiGFX extends GuiPanel
 				((Path)g.gfx).setFillOpacity(0);
 			}
 
-
 			if (w100 > 0 && h100 > 0)
 				redraw1(g);
 			else
@@ -260,15 +261,27 @@ class GuiGFX extends GuiPanel
 		{ 
 			final String name = words.getString(Gate.cmdlineName);
 			final Gfx g = gfx.get(name);
+			
 			if (g == null)
 				return Gate.getW().error(words, -1, Gate.cmdlineNotFound);
-			final String color = words.getString(Gate.cmdlineColor);
+
+			String color = words.getString(Gate.cmdlineColor);
+			final int comma = color.indexOf(',');
+			float opacity = 1f;
+
+			// check if opacity is provided
+			if (comma >= 0)
+			{
+				opacity = new Float(color.substring(comma + 1)).floatValue();
+				color = color.substring(0, comma);
+			}
+			
 			if (isFirst) // fill color
 			{
 				if (g.gfx instanceof Ellipse)
 				{
 					((Ellipse)g.gfx).setFillColor(color);
-					((Ellipse)g.gfx).setFillOpacity(1);
+					((Ellipse)g.gfx).setFillOpacity(opacity);
 				}
 				else if (g.gfx instanceof Text)
 				{
@@ -278,18 +291,15 @@ class GuiGFX extends GuiPanel
 				else // path
 				{
 					((Path)g.gfx).setFillColor(color);
-					((Path)g.gfx).setFillOpacity(1);
+					((Path)g.gfx).setFillOpacity(opacity);
 				}
 			}
-			else // border color
-			{
-				if (g.gfx instanceof Ellipse)
-					((Ellipse)g.gfx).setStrokeColor(color);
-				else if (g.gfx instanceof Text)
-					((Text)g.gfx).setStrokeColor(color);
-				else // path
-					((Path)g.gfx).setStrokeColor(color);					
-			}				
+			if (g.gfx instanceof Ellipse)
+				((Ellipse)g.gfx).setStrokeColor(color);
+			else if (g.gfx instanceof Text)
+				((Text)g.gfx).setStrokeColor(color);
+			else // path
+				((Path)g.gfx).setStrokeColor(color);					
 		}
 		
 		else if (words.checkNextAndForward("enable"))
