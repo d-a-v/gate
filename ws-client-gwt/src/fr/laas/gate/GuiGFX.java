@@ -62,6 +62,7 @@ import java.util.Map.Entry;
 import org.vaadin.gwtgraphics.client.DrawingArea;
 import org.vaadin.gwtgraphics.client.shape.Ellipse;
 import org.vaadin.gwtgraphics.client.shape.Path;
+import org.vaadin.gwtgraphics.client.shape.Text;
 import org.vaadin.gwtgraphics.client.shape.path.LineTo;
 import org.vaadin.gwtgraphics.client.shape.path.MoveTo;
 import org.vaadin.gwtgraphics.client.VectorObject;
@@ -228,6 +229,12 @@ class GuiGFX extends GuiPanel
 					g.path.add(g.new xy(x, y));
 				}
 			}
+
+			else if (type.equals("text"))
+			{
+				final String text = words.getString(Gate.cmdlineCenterX);
+				gfx.put(name, g = new Gfx(new Text(0, 0, text), x1, y1, 0, 0));
+			}
 			
 			if (g.gfx instanceof Ellipse)
 			{
@@ -263,6 +270,11 @@ class GuiGFX extends GuiPanel
 					((Ellipse)g.gfx).setFillColor(color);
 					((Ellipse)g.gfx).setFillOpacity(1);
 				}
+				else if (g.gfx instanceof Text)
+				{
+					((Text)g.gfx).setFillColor(color);
+					((Text)g.gfx).setFillOpacity(1);
+				}
 				else // path
 				{
 					((Path)g.gfx).setFillColor(color);
@@ -273,6 +285,8 @@ class GuiGFX extends GuiPanel
 			{
 				if (g.gfx instanceof Ellipse)
 					((Ellipse)g.gfx).setStrokeColor(color);
+				else if (g.gfx instanceof Text)
+					((Text)g.gfx).setStrokeColor(color);
 				else // path
 					((Path)g.gfx).setStrokeColor(color);					
 			}				
@@ -334,6 +348,13 @@ class GuiGFX extends GuiPanel
 				for (Gfx.xy xy: g.path)
 					p.setStep(++c, new LineTo(false, (int)(xy.x * w100), (int)(xy.y * h100)));
 			}
+		}
+
+		else if (g.gfx instanceof Text)
+		{
+			final Text t = (Text) g.gfx;
+			t.setX(x);
+			t.setY(y);
 		}
 		
 		//XXX else bad bad bad ??		
