@@ -163,7 +163,6 @@ class GuiGFX extends GuiPanel
 			{
 				final float radius = words.getPosFloat(Gate.cmdlineRadius);
 				gfx.put(name, g = new Gfx(new Ellipse(0,0,0,0), x1, y1, radius, radius));
-				((Ellipse)g.gfx).setStrokeWidth(pixelWidth);			
 			}
 
 			else if (type.equals("ellipse"))
@@ -171,7 +170,6 @@ class GuiGFX extends GuiPanel
 				final float radiusx = words.getPosFloat(Gate.cmdlineRadius);
 				final float radiusy = words.getPosFloat(Gate.cmdlineRadius);
 				gfx.put(name, g = new Gfx(new Ellipse(0,0,0,0), x1, y1, radiusx, radiusy));
-				((Ellipse)g.gfx).setStrokeWidth(pixelWidth);			
 			}
 
 			else if (type.equals("line"))
@@ -181,7 +179,6 @@ class GuiGFX extends GuiPanel
 				gfx.put(name, g = new Gfx(new Path(0,0), x1, y1, x1, nexty));
 				g.path = new ArrayList<Gfx.xy>();
 				g.path.add(g.new xy(nextx, nexty));
-				((Path)g.gfx).setStrokeWidth(pixelWidth);
 			}
 			
 			else if (type.equals("arrow"))
@@ -201,8 +198,6 @@ class GuiGFX extends GuiPanel
 				g.path.add(g.new xy(nextx, nexty));
 				g.path.add(g.new xy(ax - dirx, ay - diry));
 				g.path.add(g.new xy(ax, ay));
-				
-				((Path)g.gfx).setStrokeWidth(pixelWidth);
 			}
 
 			else if (type.equals("rectangle"))
@@ -215,8 +210,6 @@ class GuiGFX extends GuiPanel
 				g.path.add(g.new xy(nextx, nexty));
 				g.path.add(g.new xy(x1, nexty));
 				g.path.add(g.new xy(x1, y1));
-				
-				((Path)g.gfx).setStrokeWidth(pixelWidth);
 			}
 
 			else if (type.equals("path"))
@@ -234,10 +227,21 @@ class GuiGFX extends GuiPanel
 					final float y = words.getPosFloat(Gate.cmdlineCenterX);
 					g.path.add(g.new xy(x, y));
 				}
-				((Path)g.gfx).setFillOpacity(1);
-				((Path)g.gfx).setStrokeOpacity(1);
-				((Path)g.gfx).setStrokeWidth(pixelWidth);
 			}
+			
+			if (g.gfx instanceof Ellipse)
+			{
+				((Ellipse)g.gfx).setStrokeWidth(pixelWidth);
+				((Ellipse)g.gfx).setStrokeOpacity(1);
+				((Ellipse)g.gfx).setFillOpacity(0);
+			}
+			else
+			{
+				((Path)g.gfx).setStrokeWidth(pixelWidth);
+				((Path)g.gfx).setStrokeOpacity(1);
+				((Path)g.gfx).setFillOpacity(0);
+			}
+
 
 			if (w100 > 0 && h100 > 0)
 				redraw1(g);
@@ -255,13 +259,14 @@ class GuiGFX extends GuiPanel
 			if (isFirst) // fill color
 			{
 				if (g.gfx instanceof Ellipse)
+				{
 					((Ellipse)g.gfx).setFillColor(color);
+					((Ellipse)g.gfx).setFillOpacity(1);
+				}
 				else // path
 				{
 					((Path)g.gfx).setFillColor(color);
 					((Path)g.gfx).setFillOpacity(1);
-					((Path)g.gfx).setStrokeOpacity(1);
-					((Path)g.gfx).setStrokeColor(color);					
 				}
 			}
 			else // border color
@@ -269,10 +274,7 @@ class GuiGFX extends GuiPanel
 				if (g.gfx instanceof Ellipse)
 					((Ellipse)g.gfx).setStrokeColor(color);
 				else // path
-				{
-					((Path)g.gfx).setFillColor(color);
 					((Path)g.gfx).setStrokeColor(color);					
-				}
 			}				
 		}
 		
