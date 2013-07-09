@@ -32,7 +32,7 @@ LIBS	= -Llibgate -lgate $(WS)/lib/$(WS).a -Wl,-Bstatic -llockdev -Wl,-Bdynamic -
 ifeq ($(shell test -r /usr/include/lockdev.h && echo ok),ok)
 CFLAGS	+= -DHAVE_LOCKDEV=1
 else
-$(shell echo "$(warning notice: lockdev is not installed (pkg liblockdev-dev))")
+$(warning notice: lockdev is not installed (pkg liblockdev-dev))
 endif
 
 ###############
