@@ -75,7 +75,8 @@ class GuiGFX extends GuiPanel
 {	
 	private static final int pixelWidth = 1;
 	private static final int arrowDivider = 3;
-	private static final float arrowAlpha = 0.1f;
+	private static final float arrowPercent = 8f;
+	private String defColor = null, defBColor = null; 
 	
 	protected final class Gfx
 	{
@@ -120,10 +121,11 @@ class GuiGFX extends GuiPanel
 		return
 						  "# \tadd <name> <gfxtype*> <args..>\tadd a graphics object"
 			+ Gate.endl + "# \tdel <name>\t\t\tdelete the named object"
-			+ Gate.endl + "# \tcolor <name> <color*>\t\tchange color"
-			+ Gate.endl + "# \tbcolor <name> <color*>\t\tchange border color"
-			+ Gate.endl + "# \tenable <name> <color*>\t\tenable event"
-			+ Gate.endl + "# \t\t* gfxtype and args are:   (all coordinates are in %)"
+			+ Gate.endl + "# \tcolor <name>|default <color*>\tchange color"
+			+ Gate.endl + "# \tbcolor <name>|default <color*>\tchange border color"
+			+ Gate.endl + "# \tenable <name>\t\t\tenable event"
+			+ Gate.endl + "# \t* all coordinates are in % only *"
+			+ Gate.endl + "# \t\t* gfxtype and args are:"
 			+ Gate.endl + "# \t\t  - circle    - x y radius"
 			+ Gate.endl + "# \t\t  - ellipse   - x y xradius yradius"
 			+ Gate.endl + "# \t\t  - rectangle - x1 y1 x2 y2"
@@ -135,6 +137,44 @@ class GuiGFX extends GuiPanel
 			+ Gate.endl + "# \t\t\tex: red,0.5 = #f00,0.5 = #ff0000,0.5"
 			+ Gate.endl + "# \t\t\tex: blue = blue,1 = #00f = #0000ff,1"
 			;
+	}
+	
+	private void updateColor (String color, boolean isFill, final Gfx g)
+	{
+		final int comma = color.indexOf(',');
+		float opacity = 1f;
+
+		// check if opacity is provided
+		if (comma >= 0)
+		{
+			opacity = new Float(color.substring(comma + 1)).floatValue();
+			color = color.substring(0, comma);
+		}
+		
+		if (isFill) // fill color
+		{
+			if (g.gfx instanceof Ellipse)
+			{
+				((Ellipse)g.gfx).setFillColor(color);
+				((Ellipse)g.gfx).setFillOpacity(opacity);
+			}
+			else if (g.gfx instanceof Text)
+			{
+				((Text)g.gfx).setFillColor(color);
+				((Text)g.gfx).setFillOpacity(opacity);
+			}
+			else // path
+			{
+				((Path)g.gfx).setFillColor(color);
+				((Path)g.gfx).setFillOpacity(opacity);
+			}
+		}
+		if (g.gfx instanceof Ellipse)
+			((Ellipse)g.gfx).setStrokeColor(color);
+		else if (g.gfx instanceof Text)
+			((Text)g.gfx).setStrokeColor(color);
+		else // path
+			((Path)g.gfx).setStrokeColor(color);
 	}
 		
 	public boolean update (final Words words) throws WordsException
@@ -189,7 +229,10 @@ class GuiGFX extends GuiPanel
 			{
 				final float nextx = words.getPosFloat(Gate.cmdlineCenterX);
 				final float nexty = words.getPosFloat(Gate.cmdlineCenterY);
-				
+				final float norm = (float)Math.pow((x1-nextx)*(x1-nextx)+(y1-nexty)*(y1-nexty), 0.5);
+				if (norm <= 0)
+					return true;
+				final float arrowAlpha = arrowPercent / norm;
 				final float ax = (int)(arrowAlpha * x1 + (1.0 - arrowAlpha) * nextx);
 				final float ay = (int)(arrowAlpha * y1 + (1.0 - arrowAlpha) * nexty);
 				final float dirx = (int)(arrowAlpha / arrowDivider * (nexty - y1));
@@ -239,6 +282,9 @@ class GuiGFX extends GuiPanel
 				gfx.put(name, g = new Gfx(new Text(0, 0, text), x1, y1, 0, 0));
 			}
 			
+			else 
+				return Gate.getW().error(words, -1, Gate.cmdlineObjectType);
+			
 			if (g.gfx instanceof Ellipse)
 			{
 				((Ellipse)g.gfx).setStrokeWidth(pixelWidth);
@@ -257,6 +303,11 @@ class GuiGFX extends GuiPanel
 				((Path)g.gfx).setStrokeOpacity(1);
 				((Path)g.gfx).setFillOpacity(0);
 			}
+			
+			if (defColor != null)
+				updateColor(defColor, /*fill*/true, g);
+			if (defBColor != null)
+				updateColor(defBColor, /*border*/false, g);
 
 			if (w100 > 0 && h100 > 0)
 				redraw1(g);
@@ -267,46 +318,21 @@ class GuiGFX extends GuiPanel
 		else if ((isFirst = words.checkNextAndForward("color")) || words.checkNextAndForward("bcolor"))
 		{ 
 			final String name = words.getString(Gate.cmdlineName);
-			final Gfx g = gfx.get(name);
+			final String color = words.getString(Gate.cmdlineColor);
+			if (name.equals("default"))
+			{
+				if (isFirst)
+					defColor = color;
+				else
+					defBColor = color;
+				return true;
+			}
 			
+			final Gfx g = gfx.get(name);		
 			if (g == null)
 				return Gate.getW().error(words, -1, Gate.cmdlineNotFound);
 
-			String color = words.getString(Gate.cmdlineColor);
-			final int comma = color.indexOf(',');
-			float opacity = 1f;
-
-			// check if opacity is provided
-			if (comma >= 0)
-			{
-				opacity = new Float(color.substring(comma + 1)).floatValue();
-				color = color.substring(0, comma);
-			}
-			
-			if (isFirst) // fill color
-			{
-				if (g.gfx instanceof Ellipse)
-				{
-					((Ellipse)g.gfx).setFillColor(color);
-					((Ellipse)g.gfx).setFillOpacity(opacity);
-				}
-				else if (g.gfx instanceof Text)
-				{
-					((Text)g.gfx).setFillColor(color);
-					((Text)g.gfx).setFillOpacity(opacity);
-				}
-				else // path
-				{
-					((Path)g.gfx).setFillColor(color);
-					((Path)g.gfx).setFillOpacity(opacity);
-				}
-			}
-			if (g.gfx instanceof Ellipse)
-				((Ellipse)g.gfx).setStrokeColor(color);
-			else if (g.gfx instanceof Text)
-				((Text)g.gfx).setStrokeColor(color);
-			else // path
-				((Path)g.gfx).setStrokeColor(color);					
+			updateColor(color, isFirst, g);
 		}
 		
 		else if (words.checkNextAndForward("enable"))
