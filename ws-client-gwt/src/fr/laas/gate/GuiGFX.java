@@ -132,7 +132,7 @@ class GuiGFX extends GuiPanel
 			+ Gate.endl + "# \t\t  - line      - x1 y1 x2 y2"
 			+ Gate.endl + "# \t\t  - arrow     - x1 y1 x2 y2"
 			+ Gate.endl + "# \t\t  - path      - x1 y1 x2 y2 [ x3 y3 [ ... ] ]"
-			+ Gate.endl + "# \t\t  - text      - x1 y1 yourText"
+			+ Gate.endl + "# \t\t  - text      - x y yourText size"
 			+ Gate.endl + "# \t\t* color is english/#rgb/#rrggbb[,opacity]"
 			+ Gate.endl + "# \t\t\tex: red,0.5 = #f00,0.5 = #ff0000,0.5"
 			+ Gate.endl + "# \t\t\tex: blue = blue,1 = #00f = #0000ff,1"
@@ -279,7 +279,9 @@ class GuiGFX extends GuiPanel
 			else if (type.equals("text"))
 			{
 				final String text = words.getString(Gate.cmdlineCenterX);
-				gfx.put(name, g = new Gfx(new Text(0, 0, text), x1, y1, 0, 0));
+				final float size = words.getPosFloat(Gate.cmdlineCenterX);
+				System.out.println("size = " + size);
+				gfx.put(name, g = new Gfx(new Text(0, 0, text), x1, y1, size, 0));
 			}
 			
 			else 
@@ -398,6 +400,8 @@ class GuiGFX extends GuiPanel
 			final Text t = (Text) g.gfx;
 			t.setX(x);
 			t.setY(y);
+			int size = (int) g.x2;
+			t.setFontSize(size);
 			t.setFillOpacity(1);
 		}
 		
