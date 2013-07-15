@@ -63,6 +63,7 @@ import org.vaadin.gwtgraphics.client.DrawingArea;
 import org.vaadin.gwtgraphics.client.shape.Ellipse;
 import org.vaadin.gwtgraphics.client.shape.Path;
 import org.vaadin.gwtgraphics.client.shape.Text;
+import org.vaadin.gwtgraphics.client.Image;
 import org.vaadin.gwtgraphics.client.shape.path.LineTo;
 import org.vaadin.gwtgraphics.client.shape.path.MoveTo;
 import org.vaadin.gwtgraphics.client.VectorObject;
@@ -133,6 +134,7 @@ class GuiGFX extends GuiPanel
 			+ Gate.endl + "# \t\t  - arrow     - x1 y1 x2 y2"
 			+ Gate.endl + "# \t\t  - path      - x1 y1 x2 y2 [ x3 y3 [ ... ] ]"
 			+ Gate.endl + "# \t\t  - text      - x y yourText size"
+			+ Gate.endl + "# \t\t  - image      - x y width height href"
 			+ Gate.endl + "# \t\t* color is english/#rgb/#rrggbb[,opacity]"
 			+ Gate.endl + "# \t\t\tex: red,0.5 = #f00,0.5 = #ff0000,0.5"
 			+ Gate.endl + "# \t\t\tex: blue = blue,1 = #00f = #0000ff,1"
@@ -280,8 +282,15 @@ class GuiGFX extends GuiPanel
 			{
 				final String text = words.getString(Gate.cmdlineCenterX);
 				final float size = words.getPosFloat(Gate.cmdlineCenterX);
-				System.out.println("size = " + size);
 				gfx.put(name, g = new Gfx(new Text(0, 0, text), x1, y1, size, 0));
+			}
+
+			else if (type.equals("image"))
+			{
+				final float width = words.getPosFloat(Gate.cmdlineCenterX);
+				final float height = words.getPosFloat(Gate.cmdlineCenterY);
+				final String href = words.getString(Gate.cmdlineCenterX);
+				gfx.put(name, g = new Gfx(new Image(0, 0, 0, 0, href), x1, y1, width, height));
 			}
 			
 			else 
@@ -298,6 +307,13 @@ class GuiGFX extends GuiPanel
 				((Text)g.gfx).setStrokeWidth(pixelWidth);
 				((Text)g.gfx).setStrokeOpacity(1);
 				((Text)g.gfx).setFillOpacity(1);
+			}
+			else if (g.gfx instanceof Image)
+			{
+				/*((Image)g.gfx).setStrokeWidth(pixelWidth);
+				((Image)g.gfx).setStrokeOpacity(1);
+				((Image)g.gfx).setFillOpacity(1);*/
+				// Rien a faire ?
 			}
 			else
 			{
@@ -400,9 +416,18 @@ class GuiGFX extends GuiPanel
 			final Text t = (Text) g.gfx;
 			t.setX(x);
 			t.setY(y);
-			int size = (int) g.x2;
+			int size = x2;
 			t.setFontSize(size);
 			t.setFillOpacity(1);
+		}
+
+		else if (g.gfx instanceof Image)
+		{
+			final Image i = (Image) g.gfx;
+			i.setX(x);
+			i.setY(y);
+			i.setWidth(x2);
+			i.setHeight(y2);
 		}
 		
 		//XXX else bad bad bad ??		
