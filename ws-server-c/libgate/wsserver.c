@@ -152,6 +152,7 @@ static int callback_http (
 	{
 		static const unsigned char t404 [] = "nothing here";
 		static const binware_s w404 = { ".html", sizeof(t404), t404 };
+		binware_s user;
 
 		const binware_s* bin;
 		const char* ext;
@@ -174,9 +175,14 @@ static int callback_http (
 		for (bin = &binware_bin[0]; bin->name; bin++)
 			if (strcmp(in, &bin->name[1]) == 0)
 				break;
-		// ... or 404		
 		if (!bin->name)
-			bin = &w404;
+		{
+			if (gate_serve_external_file && (user.size = gate_serve_external_file(user.name = in, &user.data)))
+				bin = &user;
+			else
+				// ... or 404		
+				bin = &w404;
+		}
 
 		// locate extension and set content-type
 		for (ext = &bin->name[strlen(bin->name)]; ext != bin->name && *ext != '.'; ext--);
@@ -343,6 +349,8 @@ int gate_init (const char* protocol_name)
 	ws_input = fifo_create();
 	
 	gate_str_init(&psend_line);
+	
+	gate_serve_external_file = NULL;
 
 	lws_set_log_level(0, NULL);
 

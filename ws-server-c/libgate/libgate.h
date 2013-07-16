@@ -101,6 +101,8 @@ const char*	gate_psend		(const char* s, ...) __attribute__((format(printf, 1, 2)
 int		gate_talking		(const char* recv);
 int		gate_talking_protocol	(const char* recv);
 
+unsigned long (*gate_serve_external_file) (const char* name, const unsigned char** data);
+
 /******************************************/
 /* debug info borrowed from libwebsockets */
 
