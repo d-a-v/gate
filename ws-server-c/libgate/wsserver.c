@@ -95,6 +95,8 @@ static	fifo_t					ws_input = NULL;
 static	struct lws_context_creation_info	info;
 static	gate_str_t				psend_line = GATE_STR_INIT;
 
+unsigned long (*gate_serve_external_file) (const char* name, const unsigned char** data);
+
 int gate_add_pollfd (int fd, int event)
 {
 	if (count_pollfds >= max_poll_elements)
