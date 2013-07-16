@@ -5,3 +5,4 @@ wsserver.c: dynamic size for output_buffer_lws
 serial: try 3 times to get auth instead once ?
 make logo/turtle example ?
 tetris: check the end of greying, strangeness happens
+recheck "?server=" parameter in url with firefox
