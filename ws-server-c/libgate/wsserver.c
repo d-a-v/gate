@@ -188,14 +188,16 @@ static int callback_http (
 
 		// locate extension and set content-type
 		for (ext = &bin->name[strlen(bin->name)]; ext != bin->name && *ext != '.'; ext--);
-		if (strcmp(ext, ".html") == 0)
+		if (strcasecmp(ext, ".html") == 0)
 			content_type = "text/html";
-		else if (strcmp(ext, ".css") == 0)
+		else if (strcasecmp(ext, ".css") == 0)
 			content_type = "text/css";
-		else if (strcmp(ext, ".ico") == 0)
+		else if (strcasecmp(ext, ".ico") == 0)
 			content_type = "image/vnd.microsoft.icon";
-		else if (strcmp(ext, ".js") == 0)
+		else if (strcasecmp(ext, ".js") == 0)
 			content_type = "text/javascript";
+		else if (strcasecmp(ext, ".svg") == 0)
+			content_type = "image/svg+xml";
 		else
 			content_type = "";
 		
