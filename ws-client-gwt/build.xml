@@ -62,25 +62,29 @@
 
   </target>
 
-  <target name="devmode" depends="javac" description="Run development mode">
-    <java failonerror="true" fork="true" classname="com.google.gwt.dev.DevMode">
+  <target name="gwtc-dbg" depends="javac" description="GWT compile to JavaScript (debug mode)">
+    <java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler">
+
       <classpath>
         <pathelement location="src"/>
         <path refid="project.class.path"/>
         <pathelement location="${gwt.sdk}/validation-api-1.0.0.GA.jar" />
         <pathelement location="${gwt.sdk}/validation-api-1.0.0.GA-sources.jar" />
       </classpath>
+      <!-- add jvmarg -Xss16M or similar if you see a StackOverflowError -->
+      <jvmarg value="-Xss16M"/>
       <jvmarg value="-Xmx256M"/>
-      <arg value="-startupUrl"/>
-      <arg value="gate.html"/>
       <arg line="-war"/>
       <arg value="war"/>
-      <!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
-      <!-- arg line="-strict -style PRETTY -localWorkers 8 -draftCompile"/-->
-      <arg line="-localWorkers 32"/>
+      <arg line="-style PRETTY -draftCompile -strict -logLevel INFO"/>
       <arg line="${gwt.args}"/>
       <arg value="fr.laas.gate"/>
     </java>
+
+    <copy todir="war/gate">
+      <fileset file="lib/index.html"/>
+    </copy>
+
   </target>
 
   <target name="eclipse.generate" description="Generate eclipse project">
@@ -95,9 +99,10 @@
   </target>
 
 
-  <target name="hosted" depends="devmode" description="Run development mode (NOTE: the 'hosted' target is deprecated)" />
+  <!-- target name="hosted" depends="devmode" description="Run development mode (NOTE: the 'hosted' target is deprecated)" /-->
 
   <target name="build" depends="gwtc" description="Build this project" />
+  <target name="debug" depends="gwtc-dbg" description="Build this project with readable js" />
 
   <target name="clean" description="Cleans this project">
     <delete includeemptydirs="true">
