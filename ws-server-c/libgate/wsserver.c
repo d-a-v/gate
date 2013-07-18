@@ -49,8 +49,6 @@
  * 
  *************************************************************/
 
-#define DEBUG 0
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -81,10 +79,6 @@ enum protocols_e
 
 static struct libwebsocket_protocols protocols [protocol_endoflist + 1];
 
-//XXX make this dynamic
-#define OUTPUT_BUFFER_SIZE 1024			// must be < 0xffff
-static	unsigned char				output_buffer_lws [LWS_SEND_BUFFER_PRE_PADDING + OUTPUT_BUFFER_SIZE + 4 + LWS_SEND_BUFFER_POST_PADDING];
-
 static	struct libwebsocket_context*		context = NULL;
 static	struct pollfd*				pollfds = NULL;
 static	int*					fd_lookup = NULL;
@@ -94,6 +88,7 @@ static	fifo_t					ws_output = NULL;
 static	fifo_t					ws_input = NULL;
 static	struct lws_context_creation_info	info;
 static	gate_str_t				psend_line = GATE_STR_INIT;
+static	gate_str_t				output_buffer_lws = GATE_STR_INIT;
 
 unsigned long (*gate_serve_external_file) (const char* name, const unsigned char** data);
 
@@ -162,9 +157,7 @@ static int callback_http (
 		char* qmark;
 		int ret;
 		
-#if DEBUG
 		lwsl_notice("HTTP URI: '%s'\n", (char *)in);
-#endif
 		
 		// cut at first '?' from end
 		for (qmark = ((char*)in)+strlen(in); qmark != in && *qmark != '?'; qmark--);
@@ -238,9 +231,7 @@ static int callback_http (
 		break;
 
 	default:
-#if DEBUG
 		print_unhandled_reason("cb_http", reason);
-#endif
 		break;
 
 	}
@@ -267,30 +258,33 @@ static int callback_gate (
 			int offset;
 			unsigned int len = strlen(to_send);
 
-			if (len > OUTPUT_BUFFER_SIZE)
+			if (len > (typeof(len))0xffff)
 			{
-				lwsl_err("line too long for websocket (%i > %i), increase OUTPUT_BUFFER_SIZE in wsserver.c:\n('%s')\n", len, OUTPUT_BUFFER_SIZE, to_send);
+				lwsl_err("line too long for websocket (%l > %l) in wsserver.c:\n('%s')\n", len, (typeof(len))0xffff, to_send);
 				exit(1);
 			}
-				
-			output_buffer_lws[LWS_SEND_BUFFER_PRE_PADDING + 0] = 0x81; // text frame(0x01), (first and) last frame(0x80)
+
+			if (output_buffer_lws.alloked < 4 + len + LWS_SEND_BUFFER_PRE_PADDING + LWS_SEND_BUFFER_POST_PADDING)
+				gate_str_grow(&output_buffer_lws, len + LWS_SEND_BUFFER_PRE_PADDING + LWS_SEND_BUFFER_POST_PADDING);
+
+			output_buffer_lws.str[LWS_SEND_BUFFER_PRE_PADDING + 0] = 0x81; // text frame(0x01), (first and) last frame(0x80)
 			if (len < 126)
 			{
-				output_buffer_lws[LWS_SEND_BUFFER_PRE_PADDING + 1] = len;
+				output_buffer_lws.str[LWS_SEND_BUFFER_PRE_PADDING + 1] = len;
 				offset = 2;
 			}
 			else
 			{
-				output_buffer_lws[LWS_SEND_BUFFER_PRE_PADDING + 1] = 126; // size is in the next 2 bytes (network byte order)
-				output_buffer_lws[LWS_SEND_BUFFER_PRE_PADDING + 2] = len >> 8;
-				output_buffer_lws[LWS_SEND_BUFFER_PRE_PADDING + 3] = len & 0xff;
+				output_buffer_lws.str[LWS_SEND_BUFFER_PRE_PADDING + 1] = 126; // size is in the next 2 bytes (network byte order)
+				output_buffer_lws.str[LWS_SEND_BUFFER_PRE_PADDING + 2] = len >> 8;
+				output_buffer_lws.str[LWS_SEND_BUFFER_PRE_PADDING + 3] = len & 0xff;
 				offset = 4;
 			}
 
-			memcpy((char*)&output_buffer_lws[LWS_SEND_BUFFER_PRE_PADDING + offset], to_send, len);
+			memcpy((char*)&output_buffer_lws.str[LWS_SEND_BUFFER_PRE_PADDING + offset], to_send, len);
 			free_e(&to_send);
 
-			libwebsocket_write(wsi, &output_buffer_lws[LWS_SEND_BUFFER_PRE_PADDING], len + offset, LWS_WRITE_HTTP);
+			libwebsocket_write(wsi, (unsigned char*)&output_buffer_lws.str[LWS_SEND_BUFFER_PRE_PADDING], len + offset, LWS_WRITE_HTTP);
 		}
 		break;
 	}
@@ -483,6 +477,7 @@ void gate_stop (void)
 	free_e(&pollfds);
 	free_e(&fd_lookup);
 	gate_str_free(&psend_line);
+	gate_str_free(&output_buffer_lws);
 }
 
 void gate_lws_setloglevel (int loglevel)
