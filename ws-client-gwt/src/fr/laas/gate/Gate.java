@@ -868,8 +868,11 @@ public class Gate implements EntryPoint
 			setBackgroundColor(obj, words.getString(Gate.cmdlineText));
 		
 		else if (words.checkNextAndForward("gap"))
+		{
 			//XXX string constant
 			obj.getPlace().setGap(words.getPosInt("gap size"));
+			uiNeedUpdate(obj);
+		}
 
 		else if (words.checkNextAndForward("focus"))
 			guiRoot.focus(getPrimaryAncestor(obj));
