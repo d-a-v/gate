@@ -208,6 +208,11 @@ public class Gate implements EntryPoint
 			public String		help	() { return GuiSliderBar.help(); }
 		});
 
+		helpers.put("image", new IntfHelper() 
+		{
+			public IntfObject	starter (final IntfObject p, final String n) { return new GuiImage(p, n); }
+			public String		help	() { return GuiImage.help(); }
+		});
 
 	}
 	
