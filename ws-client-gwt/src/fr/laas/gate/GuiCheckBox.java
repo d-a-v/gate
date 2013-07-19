@@ -104,8 +104,7 @@ class GuiCheckBox extends CheckBox implements IntfObject
 	public static String help ()
 	{
 		return
-					   "# \tgroup <t>\tset group name"
-			+ Gate.endl + "# \ttext <t>\tchange text in button"
+					   "# \ttext <t>\tchange text in button"
 			;
 	}
 	
@@ -114,9 +113,7 @@ class GuiCheckBox extends CheckBox implements IntfObject
 		if (words == null)
 			return true;
 		
-		if (words.checkNextAndForward("group"))
-			setName(words.getString(Gate.cmdlineGroup));
-		else if (words.checkNextAndForward("text"))
+		if (words.checkNextAndForward("text"))
 			setText(text = words.getString(Gate.cmdlineText));
 		else
 			return false;
