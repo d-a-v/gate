@@ -107,6 +107,8 @@ class GuiCheckBox extends CheckBox implements IntfObject
 					    "# \ttext <t>\tchange text in button"
 			+ Gate.endl + "# \tenable\tenable the check box"
 			+ Gate.endl + "# \tdisable\tdisable the check box"
+			+ Gate.endl + "# \ttrue\tcheck the check box"
+			+ Gate.endl + "# \tfalse\tuncheck the check box"
 			;
 	}
 	
@@ -121,6 +123,10 @@ class GuiCheckBox extends CheckBox implements IntfObject
 			setEnabled(true);
 		else if (words.checkNextAndForward("disable"))
 			setEnabled(false);
+		else if (words.checkNextAndForward("true"))
+			setValue(true);
+		else if (words.checkNextAndForward("false"))
+			setValue(false);
 		else
 			return false;
 		return true;

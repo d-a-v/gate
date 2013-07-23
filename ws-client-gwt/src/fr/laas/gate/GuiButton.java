@@ -100,6 +100,7 @@ class GuiButton extends Button implements IntfObject
 					   "# \ttext <t>\tchange text in button"
 			+ Gate.endl + "# \tdisable"
 			+ Gate.endl + "# \tenable"
+			+ Gate.endl + "# \ttooltip <t>\tchange text in tooltip"
 			;
 	}
 	
@@ -117,6 +118,8 @@ class GuiButton extends Button implements IntfObject
 			setEnabled(true);
 		else if (words.checkNextAndForward("disable"))
 			setEnabled(false);
+		else if (words.checkNextAndForward("tooltip"))
+			setTitle(words.getString(Gate.cmdlineText));
 		else
 			return false;		
 		
