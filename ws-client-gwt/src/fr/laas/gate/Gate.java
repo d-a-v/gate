@@ -166,6 +166,12 @@ public class Gate implements EntryPoint
 			public String		help	() { return GuiRadio.help(); }
 		});
 
+		helpers.put("fileupload", new IntfHelper() 
+		{
+			public IntfObject	starter (final IntfObject p, final String n) { return new GuiFileUpload(p, n); }
+			public String		help	() { return GuiFileUpload.help(); }
+		});
+
 		helpers.put("checkbox", new IntfHelper() 
 		{
 			public IntfObject	starter (final IntfObject p, final String n) { return new GuiCheckBox(p, n); }
