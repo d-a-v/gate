@@ -58,19 +58,15 @@ import java.util.List;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FileUpload;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.Widget;
 
 
-class GuiFileUpload extends VerticalPanel implements IntfObject
+class GuiFileUpload extends FormPanel implements IntfObject
 {	
 	///////////////////////////////////////////////////////
 	// IntfObject implementation
@@ -78,8 +74,6 @@ class GuiFileUpload extends VerticalPanel implements IntfObject
 	String				name			= null;
 	IntfObject			parent			= null;
 	Place				place			= null;
-	TextBox				t				= null;
-	FileUpload			f				= null;
 		
 	public String			getName		()	{ return name; }
 	public IntfObject		getGOParent	()	{ return parent; }
@@ -90,33 +84,50 @@ class GuiFileUpload extends VerticalPanel implements IntfObject
 	
 	public GuiFileUpload (IntfObject parent, String name)
 	{
-		super();
-		setStyleName("");
-		
-		this.name = name;
-		this.parent = parent;
-		HorizontalPanel h1 = new HorizontalPanel();
-		HorizontalPanel h2 = new HorizontalPanel();
-		t = new TextBox();
-		t.setName(this.name + "Text");
-		f = new FileUpload() {
-			public void onLoad() {
-				setName("Parcourir");
-			}
-		};
-		h1.add(t);
-		h1.add(f);
-		t.setText(f.getFilename());
-		h2.add(new Button("Submit", new ClickHandler() {
+
+		setAction("/myFormHandler");
+
+		// Because we're going to add a FileUpload widget, we'll need to set the
+		// form to use the POST method, and multipart MIME encoding.
+		setEncoding(FormPanel.ENCODING_MULTIPART);
+		setMethod(FormPanel.METHOD_POST);
+
+		// Create a panel to hold all of the form widgets.
+		VerticalPanel panel = new VerticalPanel();
+		setWidget(panel);
+
+		// Create a FileUpload widget.
+		final FileUpload upload = new FileUpload();
+		upload.setName("uploadFormElement");
+		panel.add(upload);
+
+		// Add a 'submit' button.
+		panel.add(new Button("Submit", new ClickHandler() {
 			public void onClick(ClickEvent event) {
-				String fileName = f.getFilename();
-				t.setText(fileName);
-				Gate.getW().send("'" + getName() + "' '" + fileName + "'");
-				//submit();
+				submit();
 			}
 		}));
-		this.add(h1);
-		this.add(h2);
+
+		// Add an event handler to the form.
+		addSubmitHandler(new FormPanel.SubmitHandler() {
+			public void onSubmit(SubmitEvent event) {
+				// This event is fired just before the form is submitted. We can take
+				// this opportunity to perform validation.
+				if (upload.getFilename().length() == 0) {
+					Window.alert("The text box must not be empty");
+					event.cancel();
+				}
+			}
+		});
+		addSubmitCompleteHandler(new FormPanel.SubmitCompleteHandler() {
+			public void onSubmitComplete(SubmitCompleteEvent event) {
+				// When the form submission is successfully completed, this event is
+				// fired. Assuming the service returned a response of type text/html,
+				// we can get the result text here (see the FormPanel documentation for
+				// further explanation).
+				Window.alert(event.getResults());
+			}
+		});
 
 		place = new Place(this);
 		// we are container, gap will be useful by inside objects
