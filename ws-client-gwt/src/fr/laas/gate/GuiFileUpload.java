@@ -53,22 +53,33 @@
 
 package fr.laas.gate;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.FileUpload;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.FormPanel;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.Widget;
 
 
-class GuiButton extends Button implements IntfObject
-{
+class GuiFileUpload extends VerticalPanel implements IntfObject
+{	
 	///////////////////////////////////////////////////////
 	// IntfObject implementation
 
 	String				name			= null;
 	IntfObject			parent			= null;
 	Place				place			= null;
+	TextBox				t				= null;
+	FileUpload			f				= null;
 		
 	public String			getName		()	{ return name; }
 	public IntfObject		getGOParent	()	{ return parent; }
@@ -77,80 +88,105 @@ class GuiButton extends Button implements IntfObject
 	public List<IntfObject>	getSons		()	{ return null; }
 
 	
-	public GuiButton (IntfObject parent, String name) 
+	public GuiFileUpload (IntfObject parent, String name)
 	{
+		super();
+		setStyleName("");
+		
 		this.name = name;
 		this.parent = parent;
-		place = new Place(this);
-
-		parent.addSon(this, name);
-		
-		addClickHandler(new ClickHandler()
-		{
-			public void onClick (ClickEvent event)
-			{
-				Gate.getW().send("'" + getName() + "'");
+		HorizontalPanel h1 = new HorizontalPanel();
+		HorizontalPanel h2 = new HorizontalPanel();
+		t = new TextBox();
+		t.setName(this.name + "Text");
+		f = new FileUpload() {
+			public void onLoad() {
+				setName("Parcourir");
 			}
-		});
+		};
+		h1.add(t);
+		h1.add(f);
+		t.setText(f.getFilename());
+		h2.add(new Button("Submit", new ClickHandler() {
+			public void onClick(ClickEvent event) {
+				String fileName = f.getFilename();
+				t.setText(fileName);
+				Gate.getW().send("'" + getName() + "' '" + fileName + "'");
+				//submit();
+			}
+		}));
+		this.add(h1);
+		this.add(h2);
+
+		place = new Place(this);
+		// we are container, gap will be useful by inside objects
+		place.setGap(0);
+			
+		parent.addSon(this, name);
+	}
+
+	public boolean setSonPosition (IntfObject son)
+	{
+		/*setWidgetPosition(
+				son.getWidget(), 
+				(int)(son.getPlace().c(Place.x).getPixel() + son.getPlace().getGap()), 
+				(int)(son.getPlace().c(Place.y).getPixel() + son.getPlace().getGap()));
+		return true;*/
+		return false;
 	}
 		
 	public static String help ()
 	{
 		return
-					   "# \ttext <t>\tchange text in button"
-			+ Gate.endl + "# \tdisable"
-			+ Gate.endl + "# \tenable"
-			+ Gate.endl + "# \ttooltip <t>\tchange text in tooltip"
+					   "# \tgroup <t>\tset group name"
+			+ Gate.endl + "# \ttext <t>\tchange text in button"
 			;
 	}
 	
 	public boolean update (Words words) throws WordsException
-	{		
+	{
 		if (words == null)
 			return true;
 		
-		if (words.checkNextAndForward("text"))
-		{
-			setText(words.getString(Gate.cmdlineText));
-			Gate.getW().uiNeedUpdate(this); // for text resize
-		}
-		else if (words.checkNextAndForward("enable"))
-			setEnabled(true);
-		else if (words.checkNextAndForward("disable"))
-			setEnabled(false);
-		else if (words.checkNextAndForward("tooltip"))
-			setTitle(words.getString(Gate.cmdlineText));
+		/*if (words.checkNextAndForward("group"))
+			setName(words.getString(Gate.cmdlineGroup));
+		else if (words.checkNextAndForward("text"))
+			setText(text = words.getString(Gate.cmdlineText));
 		else
-			return false;		
-		
+			return false;*/
 		return true;
 	}
 		
 	public void	setSonTitle (IntfObject son, String title)
 	{
-		// this widget do not have son or title
+		// this widget do not have title
 	}
 	
 	public boolean addSon (IntfObject son, String name)
 	{
-		// this widget is not a container
+		/*sons.add(son);
+		add(son.getWidget());
+		return true;*/
 		return false;
 	}	
 	
 	public void delSon (IntfObject son)
 	{
-		// this widget is not a container
-	}	
-	
-	public boolean setSonPosition (IntfObject son)
-	{
-		// this widget do not have sons
-		return false;
+		//sons.remove(son);
 	}
 	
 	public boolean redraw ()
 	{
-		return Gate.getW().setFontSize(this, getText().length());
+		return true;
 	}
+
+
+	///////////////////////////////////////////////////////
+
+//	public void onClick (Widget sender)
+//	{
+//		W.getW().send(name);
+//	}
+	
 
 } // class GuiButton
