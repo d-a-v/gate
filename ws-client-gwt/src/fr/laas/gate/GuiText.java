@@ -54,6 +54,9 @@
 package fr.laas.gate;
 
 import java.util.List;
+
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
@@ -111,6 +114,15 @@ class GuiText extends TextBox implements IntfObject
 	    		}
 	    		redraw(); // fontsize
 	        }
+	    });
+	    
+	    addBlurHandler(new BlurHandler()
+	    {
+	    	public void onBlur (BlurEvent event)
+	    	{
+    			text = getText();
+				Gate.getW().send("'" + getName() + "' '" + text + "'");
+	    	}
 	    });
 
 	    parent.addSon(this, name);
