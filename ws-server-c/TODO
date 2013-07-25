@@ -5,3 +5,7 @@ serial: try 3 times to get auth instead once ?
 make logo/turtle example ?
 tetris: check the end of greying, strangeness happens
 recheck "?server=" parameter in url with firefox
+(intermittent?) délai bizarre à chaque nouvelle connexion : quand on clique sur les boutons ça ne "part" que plus tard
+text: losefocus -> envoi du texte
+text option autoupdate -> envoi du texte
+download fichier depuis le browser ?? (websocket binary blobs / string+base64 ??)
