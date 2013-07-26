@@ -1,5 +1,0 @@
-#!/bin/sh
-set -x
-# if war/ is a symbolic link, gwt-unitCache is accessible through war/../gwt-unitCache
-# ant is too clever to correctly handle war/../gwt-unitCache if it is a symbolic link
-rm -rf war/* war/../gwt-unitCache
