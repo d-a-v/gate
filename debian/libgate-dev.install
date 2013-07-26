@@ -1,0 +1,4 @@
+../../gate/libgate/libgate.h usr/include/
+usr/lib/lib*.a
+usr/lib/lib*.la
+usr/lib/pkgconfig/*

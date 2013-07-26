@@ -1,5 +1,4 @@
-#!/bin/sh
+#!/bin/sh -x
 
-(cd ws-client-gwt; ant clean)
-(cd ws-server-c; make distclean)
-rm -f bin-*
+(cd gate; make -f simple.mak clean)
+./autoclean.sh

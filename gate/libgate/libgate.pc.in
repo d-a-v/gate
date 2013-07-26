@@ -1,0 +1,12 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: gate
+Description: Graphical Access To Exterior made simple
+URL: http://github.com/d-a-v/gate/
+Version: @VERSION@
+Requires: libwebsockets
+Libs: -L${libdir} -lgate -Wl,-Bstatic -lwebsockets -Wl,-Bdynamic -lssl
+Cflags:

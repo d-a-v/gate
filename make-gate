@@ -44,9 +44,9 @@ EOF
 }
 
 
-if (cd ws-server-c; make gate test); then
-	rm -f bin-gate; ln -s ws-server-c/gate/gate bin-gate
-	rm -f bin-tetris; ln -s ws-server-c/test/tetris bin-tetris
+if (cd gate; make -f simple.mak gate test); then
+	rm -f bin-gate; ln -s gate/gate/gate bin-gate
+	rm -f bin-tetris; ln -s gate/test/tetris bin-tetris
 	tryit
 else
 	wrong

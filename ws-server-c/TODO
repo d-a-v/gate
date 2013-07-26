@@ -1,7 +1,0 @@
-handle correctly multiple connection at libwebsocket level
-serial send more than 1char at a time (or at least only for serial)
-(re)check leaks
-serial: try 3 times to get auth instead once ?
-make logo/turtle example ?
-tetris: check the end of greying, strangeness happens
-recheck "?server=" parameter in url with firefox

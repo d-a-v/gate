@@ -1,0 +1,31 @@
+#!/bin/sh
+
+libwsh=/usr/include/libwebsockets.h
+
+test -r ${libwsh} || { echo "cannot read ${libwsh}"; exit 1; }
+
+out=lws-cb-list.h
+
+cat << EOF > "$out"
+
+// this is automatically generated from lws sources
+// (using script $0)
+
+static struct reason_list_s
+{
+	int reason;
+        const char* what;
+} reasons [] =
+{
+EOF
+
+
+for i in `grep '[ \t]*LWS[A-Z_]*CALLBACK[A-Z_]*,[ \t]*$' $libwsh | grep -v _EXT_`; do
+	cb=`echo "$i" | cut -d, -f1`
+	echo "	{ $cb, \"$cb\" },"
+done >> $out
+
+(
+echo "	{ -1, NULL }"
+echo "};"
+) >> $out

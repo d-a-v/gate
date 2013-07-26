@@ -11,15 +11,14 @@
 *.lai
 *.la
 *.a
-<<<<<<< HEAD
 
-# eclipse noise
+# java/eclipse noise
 .project
-
-# java
+.classpath
 *.class
 
 # gwt
+WEB-INF
 gwt-unitCache
 
 # editors

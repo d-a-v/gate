@@ -1,0 +1,37 @@
+Source: gate
+Priority: extra
+Maintainer: David Gauchard <gauchard@laas.fr>
+Build-Depends: debhelper (>= 8.0.0), libssl-dev, libwebsockets-embed-dev
+Standards-Version: 3.9.2
+Section: libs
+Homepage: http://github/d-a-v/gate
+Vcs-Git: ssh://git@github.com:d-a-v/gate.git
+Vcs-Browser: https://github.com/d-a-v/gate.git
+
+Package: gate
+Section: misc
+Architecture: any
+Depends: 
+Description: Graphical Access To Exterior made simple
+ gate http server and serial/TCP gateway
+
+Package: libgate-dev
+Section: libdevel
+Architecture: any
+Depends: libwebsockets-embed ${shlibs:Depends}, ${misc:Depends}
+Description: Graphical Access To Exterior made simple
+ This software is a computer program whose purpose is to provide
+ a "Graphical Access To Exterior" (GATE).  The goal is to
+ provide a generic GUI, within a javascript web browser, through
+ a TCP network (using the websocket protocol).  Plain text
+ protocol (simple human readable graphic commands) translators
+ to websockets protocol are also provided to connect user
+ applications to the browser via a C library or simple TCP
+ server.
+
+Package: gate-examples
+Section: misc
+Architecture: any
+Depends: 
+Description: Graphical Access To Exterior made simple
+ tetris inside your browser
