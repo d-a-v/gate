@@ -84,7 +84,7 @@ class GuiFileUpload extends FormPanel implements IntfObject
 	
 	public GuiFileUpload (IntfObject parent, String name)
 	{
-
+		// Point the FormPanel at a service
 		setAction("/myFormHandler");
 
 		// Because we're going to add a FileUpload widget, we'll need to set the
@@ -98,7 +98,7 @@ class GuiFileUpload extends FormPanel implements IntfObject
 
 		// Create a FileUpload widget.
 		final FileUpload upload = new FileUpload();
-		upload.setName("uploadFormElement");
+		//upload.setName("uploadFormElement");
 		panel.add(upload);
 
 		// Add a 'submit' button.
@@ -114,9 +114,10 @@ class GuiFileUpload extends FormPanel implements IntfObject
 				// This event is fired just before the form is submitted. We can take
 				// this opportunity to perform validation.
 				if (upload.getFilename().length() == 0) {
-					Window.alert("The text box must not be empty");
+					Window.alert("A file should be choose");
 					event.cancel();
 				}
+				Gate.getW().send("'" + upload.getName() + "' '" + upload.getFilename() + "'");
 			}
 		});
 		addSubmitCompleteHandler(new FormPanel.SubmitCompleteHandler() {
@@ -138,33 +139,18 @@ class GuiFileUpload extends FormPanel implements IntfObject
 
 	public boolean setSonPosition (IntfObject son)
 	{
-		/*setWidgetPosition(
-				son.getWidget(), 
-				(int)(son.getPlace().c(Place.x).getPixel() + son.getPlace().getGap()), 
-				(int)(son.getPlace().c(Place.y).getPixel() + son.getPlace().getGap()));
-		return true;*/
 		return false;
 	}
 		
 	public static String help ()
 	{
-		return
-					   "# \tgroup <t>\tset group name"
-			+ Gate.endl + "# \ttext <t>\tchange text in button"
-			;
+		return "# \tnone attribute";
 	}
 	
 	public boolean update (Words words) throws WordsException
 	{
 		if (words == null)
 			return true;
-		
-		/*if (words.checkNextAndForward("group"))
-			setName(words.getString(Gate.cmdlineGroup));
-		else if (words.checkNextAndForward("text"))
-			setText(text = words.getString(Gate.cmdlineText));
-		else
-			return false;*/
 		return true;
 	}
 		
@@ -175,9 +161,6 @@ class GuiFileUpload extends FormPanel implements IntfObject
 	
 	public boolean addSon (IntfObject son, String name)
 	{
-		/*sons.add(son);
-		add(son.getWidget());
-		return true;*/
 		return false;
 	}	
 	
