@@ -1,3 +1,9 @@
+gate (0.9.130726.1-1) precise; urgency=low
+
+  * remove useless need of wget in configure.ac
+
+ -- David Gauchard <gauchard@laas.fr>  Tue, 26 Jul 2013 21:21:47 +0200
+
 gate (0.9.130726-1) precise; urgency=low
 
   * initial release

@@ -28,10 +28,10 @@ AC_CHECK_PROG(RAWC_CHECK,libwebsockets-rawc,yes)
 if test x"$RAWC_CHECK" != x"yes" ; then
 	AC_MSG_ERROR([Please install libwebsockets-embed-dev before building.])
 fi
-AC_CHECK_PROG(WGET_CHECK,wget,yes)
-if test x"$WGET_CHECK" != x"yes" ; then
-	AC_MSG_ERROR([Please install wget before building.])
-fi
+#AC_CHECK_PROG(WGET_CHECK,wget,yes)
+#if test x"$WGET_CHECK" != x"yes" ; then
+#	AC_MSG_ERROR([Please install wget before building.])
+#fi
 
 # Checks for header files.
 AC_CHECK_HEADERS([fcntl.h netinet/in.h stdlib.h string.h sys/file.h sys/socket.h termios.h unistd.h])
