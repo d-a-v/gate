@@ -92,6 +92,7 @@ void help (const char* arg0, int exitcode)
 		"	-s			use serial devices with default parameter (*1)\n"
 		"	-h|--help\n"
 		"	   --serial=<devs>	serial devices (*1)\n"
+		// values are in libwebsockets.h (LLERR, ...)
 		"	-l|--loglevel		1=err|2=warn|4=notice|8=info|16=debug (*2)\n"
 		"\n"
 		" (*1) optional serial parameter format is 'baud1[,baud2...]#8n1[,7e2...]#ttyUSB0[,ttyACM1...]'\n"
@@ -110,7 +111,7 @@ int main (int argc, char *argv[])
 	int port_ws = GATE_DEFAULT_PORT_WS;
 	int daemon = 0;
 	int tcp = 0; // tcp server socket
-	int loglevel = 0;
+	int loglevel = 1;
 
 	while (1) 
 	{
