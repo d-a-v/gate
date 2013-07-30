@@ -96,7 +96,7 @@ void help (const char* arg0, int exitcode)
 		"\n"
 		" (*1) optional serial parameter format is 'baud1[,baud2...]#8n1[,7e2...]#ttyUSB0[,ttyACM1...]'\n"
 		"      default serial parameter is '%s'\n"
-		" (*2) any combination (add those you need)\n"
+		" (*2) any combination (add those you need, default=1)\n"
 		"\n"
 	       , arg0, VERSION, GATE_DEFAULT_PORT_WS, PORT_TCP, default_serial);
 	exit(exitcode);

@@ -350,7 +350,7 @@ int gate_init (const char* protocol_name)
 	
 	gate_serve_external_file = NULL;
 
-	lws_set_log_level(0, NULL);
+	lws_set_log_level(LLL_ERR, NULL);
 
 	return 0;
 }
