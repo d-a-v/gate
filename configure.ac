@@ -12,7 +12,8 @@ AC_CONFIG_SRCDIR([gate/gate])
 AC_CONFIG_SRCDIR([gate/test])
 AC_CONFIG_HEADERS([gate/config.h])
 
-LT_INIT(disable-shared)
+#LT_INIT(disable-shared)
+LT_INIT
 
 # Checks for programs.
 AC_PROG_CXX

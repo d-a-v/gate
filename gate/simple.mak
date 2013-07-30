@@ -21,7 +21,6 @@ LDFLAGS += -g
 
 CFLAGS	+= -Wall -Wextra -Werror
 CFLAGS	+= -Itemp -Ilibgate
-GWT	= ../gwt/war/gate/index.html
 ARFLAGS	= rcs
 LIBS	= -Llibgate -Wl,-Bstatic -lwebsockets -llockdev -Wl,-Bdynamic -lssl
 
@@ -49,14 +48,10 @@ libgate/wsserver.c: libgate/webgwt.h
 libgate/libgate.a: libgate/wsserver.o libgate/fifo.o libgate/malloc_e.o libgate/gatestr.o libgate/webgwt.o
 	$(AR) $(ARFLAGS) $@ $^
 	
-$(GWT): $(shell echo ../gwt/src/fr/laas/gate/*.java)
+libgate/webgwt.h libgate/webgwt.c: $(shell echo ../gwt/src/fr/laas/gate/*.java)
 	cd ../gwt; ant build
-
-../gwt/war/gate/favicon.ico:
-	cd ../gwt/war/gate && wget http://www.laas.fr/favicon.ico
-
-libgate/webgwt.h libgate/webgwt.c: ../gwt/war/gate/index.html ../gwt/war/gate/favicon.ico
-	cd libgate; here=`pwd`; cd ../../gwt/war/gate && libwebsockets-rawc $${here}/webgwt bin `find -type f` favicon.ico
+	cd ../gwt/war/gate && wget http://www.cnrs.fr/favicon.ico; true
+	cd libgate; here=`pwd`; cd ../../gwt/war/gate && libwebsockets-rawc $${here}/webgwt bin `find -type f`
 
 .SECONDARY: $(BIN:%=%.o)
 
@@ -72,7 +67,7 @@ libgate/webgwt.h libgate/webgwt.c: ../gwt/war/gate/index.html ../gwt/war/gate/fa
 	$(CXX) $^ -o $@ $(LDFLAGS) $(LIBS)
 
 clean:
-	rm -f $(BIN) */*.o */*.d libgate/webgwt.[ch]
+	rm -f $(BIN) */*.o */*.d
 	rm -rf temp
 
 -include */*.d
