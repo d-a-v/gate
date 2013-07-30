@@ -164,17 +164,26 @@ static int callback_http (
 		if (*qmark == '?')
 			*qmark = 0;
 
-		// default URL or search
-		if (strcmp(in, "/") == 0)
-			in = "/index.html";
-		for (bin = &binware_bin[0]; bin->name; bin++)
-			if (strcmp(in, &bin->name[1]) == 0)
-				break;
-		if (!bin->name)
+		// serve user files first
+		if (gate_serve_external_file && (user.size = gate_serve_external_file(user.name = in, &user.data)))
+			bin = &user;
+		else
 		{
-			if (gate_serve_external_file && (user.size = gate_serve_external_file(user.name = in, &user.data)))
-				bin = &user;
-			else
+			// default URL
+			if (strcmp(in, "/") == 0)
+				in = "/index.html";
+			for (bin = &binware_bin[0]; bin->name; bin++)
+			{
+				const char* name = bin->name;
+				// skip "./" in binware name
+				if (name[0] == '.' && name[1] == '/')
+					name += 2;
+				// skip '/' in URL: &in[1] instead of in
+				if (strcmp(&((const char*)in)[1], name) == 0)
+					break;
+			}
+			// 404 if not found
+			if (!bin->name)
 				// ... or 404		
 				bin = &w404;
 		}
@@ -185,14 +194,12 @@ static int callback_http (
 			content_type = "text/html";
 		else if (strcasecmp(ext, ".css") == 0)
 			content_type = "text/css";
-		else if (strcasecmp(ext, ".ico") == 0)
-			content_type = "image/vnd.microsoft.icon";
 		else if (strcasecmp(ext, ".js") == 0)
 			content_type = "text/javascript";
 		else if (strcasecmp(ext, ".svg") == 0)
 			content_type = "image/svg+xml";
 		else
-			content_type = "";
+			content_type = "text/plain";
 		
 		lwsl_notice("serving '%s'\n", bin->name);
 		ret = libwebsockets_serve_http_bin(context, wsi, bin->data, bin->size, content_type);
