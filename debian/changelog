@@ -1,3 +1,12 @@
+gate (0.9.130730-1) precise; urgency=low
+
+  * (cleanly) remove the need for gwt to build the project
+  * allow dynamic libraries
+  * set loglevel to error by default
+  * git SHA1: 8ed1cb4567543da05e7839de597546c2c9614db5
+
+ -- David Gauchard <gauchard@laas.fr>  Tue, 30 Jul 2013 20:21:47 +0200
+
 gate (0.9.130726.1-1) precise; urgency=low
 
   * remove useless need of wget in configure.ac
