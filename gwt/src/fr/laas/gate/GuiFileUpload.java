@@ -136,11 +136,6 @@ class GuiFileUpload extends FormPanel implements IntfObject
 			
 		parent.addSon(this, name);
 	}
-
-	public boolean setSonPosition (IntfObject son)
-	{
-		return false;
-	}
 		
 	public static String help ()
 	{
@@ -151,7 +146,7 @@ class GuiFileUpload extends FormPanel implements IntfObject
 	{
 		if (words == null)
 			return true;
-		return true;
+		return false; // Il faut faire quelque chose ici ! (ou ligne 176)
 	}
 		
 	public void	setSonTitle (IntfObject son, String title)
@@ -161,6 +156,7 @@ class GuiFileUpload extends FormPanel implements IntfObject
 	
 	public boolean addSon (IntfObject son, String name)
 	{
+		// this widget is not a container
 		return false;
 	}	
 	
@@ -169,18 +165,16 @@ class GuiFileUpload extends FormPanel implements IntfObject
 		//sons.remove(son);
 	}
 	
+	public boolean setSonPosition (IntfObject son)
+	{
+		// this widget do not have sons
+		return false;
+	}
+	
 	public boolean redraw ()
 	{
-		return true;
+		return true; // Il faut faire quelque chose ici ! (ou ligne 149)
 	}
 
 
-	///////////////////////////////////////////////////////
-
-//	public void onClick (Widget sender)
-//	{
-//		W.getW().send(name);
-//	}
-	
-
-} // class GuiButton
+} // class GuiFileUpload

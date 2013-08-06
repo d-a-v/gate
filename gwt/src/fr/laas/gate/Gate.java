@@ -1156,7 +1156,7 @@ public class Gate implements EntryPoint
 				if (!tryMeInvoked)
 				{
 					tryMeInvoked = true;
-					parseMulti(  "remote_tryme_panel add root panel title 'sandbox' fg black bg white;"
+					parseMulti(  "remote_tryme_panel add root panel title 'sandbox' fg black bg black;"
 							   + "sandbox add remote_tryme_panel panel w 50 bg white rightof nothing gap 5;"
 							   + "remote_tryme_log add remote_tryme_panel textzone h 80 above nothing leftof sandbox bg lightgray disable fg black;" 
 							   + "remote_tryme_input add remote_tryme_panel text bg lightgray leftof sandbox below nothing rightof nothing w 43 h 12 text help;"
