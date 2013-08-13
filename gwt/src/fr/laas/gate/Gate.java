@@ -168,8 +168,8 @@ public class Gate implements EntryPoint
 
 		helpers.put("fileupload", new IntfHelper() 
 		{
-			public IntfObject	starter (final IntfObject p, final String n) { return new GuiFileUpload(p, n); }
-			public String		help	() { return GuiFileUpload.help(); }
+			public IntfObject	starter (final IntfObject p, final String n) { return new GuiFileUploadContainer(p, n); }
+			public String		help	() { return GuiFileUploadContainer.help(); }
 		});
 
 		helpers.put("checkbox", new IntfHelper() 

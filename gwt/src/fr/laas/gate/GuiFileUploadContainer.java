@@ -58,15 +58,12 @@ import java.util.List;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.FileUpload;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.FormPanel;
-import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 
-class GuiFileUpload extends FormPanel implements IntfObject
+class GuiFileUploadContainer extends AbsolutePanel implements IntfObject
 {	
 	///////////////////////////////////////////////////////
 	// IntfObject implementation
@@ -74,71 +71,26 @@ class GuiFileUpload extends FormPanel implements IntfObject
 	String				name			= null;
 	IntfObject			parent			= null;
 	Place				place			= null;
+	List<IntfObject>	sons			= null;
 		
 	public String			getName		()	{ return name; }
 	public IntfObject		getGOParent	()	{ return parent; }
 	public Widget			getWidget	()	{ return this; }
 	public Place			getPlace	()	{ return place; }
-	public List<IntfObject>	getSons		()	{ return null; }
+	public List<IntfObject>	getSons		()	{ return sons; }
 
 	
-	public GuiFileUpload (IntfObject parent, String name)
+	public GuiFileUploadContainer (IntfObject parent, String name)
 	{
+		setStyleName("");
 		this.name = name;
-		this.parent = parent;
-
-		// Point the FormPanel at a service
-		setAction("/myFormHandler");
-
-		// Because we're going to add a FileUpload widget, we'll need to set the
-		// form to use the POST method, and multipart MIME encoding.
-		setEncoding(FormPanel.ENCODING_MULTIPART);
-		setMethod(FormPanel.METHOD_POST);
-
-		// Create a panel to hold all of the form widgets.
-		VerticalPanel panel = new VerticalPanel();
-		setWidget(panel);
-
-		// Create a FileUpload widget.
-		final FileUpload upload = new FileUpload();
-		//upload.setName("uploadFormElement");
-		panel.add(upload);
-
-		// Add a 'submit' button.
-		panel.add(new Button("Submit", new ClickHandler() {
-			public void onClick(ClickEvent event) {
-				submit();
-			}
-		}));
-
-		// Add an event handler to the form.
-		addSubmitHandler(new FormPanel.SubmitHandler() {
-			public void onSubmit(SubmitEvent event) {
-				// This event is fired just before the form is submitted. We can take
-				// this opportunity to perform validation.
-				if (upload.getFilename().length() == 0) {
-					Window.alert("A file should be choose");
-					event.cancel();
-				} else {
-					Gate.getW().send("'" + upload.getName() + "' '" + upload.getFilename() + "'");
-				}
-			}
-		});
-		addSubmitCompleteHandler(new FormPanel.SubmitCompleteHandler() {
-			public void onSubmitComplete(SubmitCompleteEvent event) {
-				// When the form submission is successfully completed, this event is
-				// fired. Assuming the service returned a response of type text/html,
-				// we can get the result text here (see the FormPanel documentation for
-				// further explanation).
-				Window.alert(event.getResults());
-			}
-		});
-
+		this.parent = parent;		
+		sons = new ArrayList<IntfObject>();
 		place = new Place(this);
 		// we are container, gap will be useful by inside objects
 		place.setGap(0);
-			
 		parent.addSon(this, name);
+		GuiFileUpload fileUpload = new GuiFileUpload(this, "fileUpload");
 	}
 		
 	public static String help ()
@@ -160,19 +112,23 @@ class GuiFileUpload extends FormPanel implements IntfObject
 	
 	public boolean addSon (IntfObject son, String name)
 	{
-		// this widget is not a container
-		return false;
+		sons.add(son);
+		add(son.getWidget());
+		return true;
 	}	
 	
 	public void delSon (IntfObject son)
 	{
-		// this widget do not have sons
+		sons.remove(son);
 	}
 	
 	public boolean setSonPosition (IntfObject son)
 	{
-		// this widget do not have sons
-		return false;
+		setWidgetPosition(
+				son.getWidget(), 
+				(int)(son.getPlace().c(Place.x).getPixel() + son.getPlace().getGap()), 
+				(int)(son.getPlace().c(Place.y).getPixel() + son.getPlace().getGap()));
+		return true;
 	}
 	
 	public boolean redraw ()
