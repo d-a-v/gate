@@ -1,3 +1,4 @@
+/usr/bin/gate-zrawc
 ../../gate/libgate/libgate.h usr/include/
 usr/lib/lib*.a
 usr/lib/lib*.la

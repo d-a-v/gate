@@ -28,6 +28,7 @@ EOF
   unzip the archive somewhere and make the symbolic link ~/.gwt points to it.
   
 EOF
+	return 1;
 }
 
 tryit()

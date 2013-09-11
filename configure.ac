@@ -21,14 +21,15 @@ AC_PROG_CC
 
 # Checks for libraries.
 AC_CHECK_LIB([lockdev], [dev_lock])
-AC_CHECK_LIB([ssl], [SSL_set_fd])
+#AC_CHECK_LIB([ssl], [SSL_set_fd])
 AC_CHECK_LIB([websockets], [libwebsocket_create_context])
+AC_CHECK_LIB([z], [deflateInit])
 
 # Checks for tools
-AC_CHECK_PROG(RAWC_CHECK,libwebsockets-rawc,yes)
-if test x"$RAWC_CHECK" != x"yes" ; then
-	AC_MSG_ERROR([Please install libwebsockets-embed-dev before building.])
-fi
+#AC_CHECK_PROG(RAWC_CHECK,libwebsockets-rawc,yes)
+#if test x"$RAWC_CHECK" != x"yes" ; then
+#	AC_MSG_ERROR([Please install libwebsockets-embed-dev before building.])
+#fi
 #AC_CHECK_PROG(WGET_CHECK,wget,yes)
 #if test x"$WGET_CHECK" != x"yes" ; then
 #	AC_MSG_ERROR([Please install wget before building.])

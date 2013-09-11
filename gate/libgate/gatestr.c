@@ -57,16 +57,28 @@
 
 #include "malloc_e.h"
 
-gate_str_t* gate_str_init (gate_str_t* str)
+#define GATE_STR_ALLOC_SIZE	128
+
+gate_str_t* gate_str_init (gate_str_t* str, size_t size)
 {
-	str->str = malloc_e(GATE_STR_ALLOC_SIZE, "string allocation");
-	str->alloked = GATE_STR_ALLOC_SIZE;
+	if (size)
+	{
+		str->str = malloc_e(size, "string allocation");
+		str->alloked = size;
+	}
+	else
+	{
+		str->str = NULL;
+		str->alloked = 0;
+	}
 	return str;
 }
 
-void gate_str_grow (gate_str_t* str, size_t grow_size)
+void gate_str_realloc (gate_str_t* str, size_t size)
 {
-	size_t new_alloked = ((size_t)((str->alloked + grow_size + GATE_STR_ALLOC_SIZE - 1) / GATE_STR_ALLOC_SIZE)) * GATE_STR_ALLOC_SIZE;
+	size_t new_alloked = ((size_t)((size + GATE_STR_ALLOC_SIZE - 1) / GATE_STR_ALLOC_SIZE)) * GATE_STR_ALLOC_SIZE;
+	if (new_alloked < str->alloked)
+		return;
 	char* new_str = realloc(str->str, new_alloked);
 	if (new_str == NULL)
 	{

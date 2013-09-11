@@ -99,7 +99,7 @@ int gate_fd_add (int newfd, long flags)
 	fd->fd = newfd;
 	fd->to_peer = fifo_create();
 	fd->from_peer = fifo_create();
-	gate_str_init(&fd->current_from_peer);
+	gate_str_init(&fd->current_from_peer, 128);
 	fd->current_from_peer.str[0] = 0;
 	fd->dev[0] = 0;
 	fd->flags = flags;
@@ -124,20 +124,19 @@ int gate_fd_add (int newfd, long flags)
 // 0: ok, otherwise remove fd
 int gate_fd_receive (int fdindex)
 {
-	int len;
 	fd_t* fd = &fds[fdindex];
+	int lenbase, len = strlen(fd->current_from_peer.str);
 	
 	do
 	{
-		int pre = strlen(fd->current_from_peer.str);
+		lenbase = len;
 		
 		#define REASONABLE 256
-		if (fd->current_from_peer.alloked - pre < REASONABLE)
-			gate_str_grow(&fd->current_from_peer, REASONABLE);
-		
-		len = read(fd->fd, fd->current_from_peer.str + pre, fd->current_from_peer.alloked - pre);
-		lwsl_info("%i has been read(fd=%i) (%li asked)\n", len, fd->fd, (long)(fd->current_from_peer.alloked - pre));
-		if (len > 0) { int i; lwsl_debug("read:('"); for (i = 0; i < len; i++) lwsl_debug("%c", *(fd->current_from_peer.str + pre + i)); lwsl_debug("')\n"); }
+		gate_str_realloc(&fd->current_from_peer, lenbase + REASONABLE);
+
+		len = read(fd->fd, fd->current_from_peer.str + lenbase, fd->current_from_peer.alloked - lenbase - 1); // with space for the future trailing 0
+		lwsl_info("%i has been read(fd=%i) (%li asked)\n", len, fd->fd, (long)(fd->current_from_peer.alloked - lenbase));
+		if (len > 0) { int i; lwsl_debug("read:('"); for (i = 0; i < len; i++) lwsl_debug("%c", *(fd->current_from_peer.str + lenbase + i)); lwsl_debug("')\n"); }
 		
 		if (len == 0 || (len == -1 && errno != EAGAIN && errno != EWOULDBLOCK))
 		{
@@ -154,7 +153,7 @@ int gate_fd_receive (int fdindex)
 			char* start;
 			char* end;
 
-			fd->current_from_peer.str[len += pre] = 0;
+			fd->current_from_peer.str[len += lenbase] = 0; // add trailing 0
 
 			lwsl_info("processing %i more chars, total='%s'\n", len, fd->current_from_peer.str);
 
@@ -162,10 +161,11 @@ int gate_fd_receive (int fdindex)
 			start = end = fd->current_from_peer.str;
 			while (1)
 			{
-				if (!*end) // no endline received
+				if (!*end) // trailing 0 reached
 				{
 					lwsl_info("updating '%s' for fifo(fd=%i dev='%s')\n", start, fd->fd, fd->dev? fd->dev: "");
-					memmove(fd->current_from_peer.str, start, end - start + 1);
+					if (start != fd->current_from_peer.str)
+						memmove(fd->current_from_peer.str, start, end - start + 1); // move including trailing 0
 					break;
 				}
 				if (*end == '\n' || *end == '\r')

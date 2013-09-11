@@ -1,7 +1,7 @@
 
 GATE	= gate/gate
-LIB	= libgate/libgate.a
-TEST	= test/fifo-test test/tetris
+LIB	= libgate/libgate.a libgate/gate-zrawc
+TEST	= test/fifo-test test/gate-tetris
 
 BIN	= $(GATE) $(LIB) $(TEST)
 ALL	= help gate lib test
@@ -22,8 +22,7 @@ LDFLAGS += -g
 CFLAGS	+= -Wall -Wextra -Werror
 CFLAGS	+= -Itemp -Ilibgate
 ARFLAGS	= rcs
-LIBS	= -Llibgate -Wl,-Bstatic -lwebsockets -llockdev -Wl,-Bdynamic -lssl
-
+LIBS	= -Llibgate -lwebsockets -llockdev -lssl
 
 ifeq ($(shell test -r /usr/include/lockdev.h && echo ok),ok)
 $(shell mkdir -p temp && echo "#define HAVE_LIBLOCKDEV 1" > temp/config.h)
@@ -41,17 +40,22 @@ help:
 	@echo ""
 
 gate/gate: gate/gate.o gate/gatetcp.o gate/gatefd.o gate/gateser.o libgate/libgate.a
-test/tetris: test/tetris.o libgate/libgate.a
+test/gate-tetris: test/gate-tetris.o libgate/libgate.a
 test/fifo-test: test/fifo-test.o libgate/fifo.o libgate/malloc_e.o
 libgate/wsserver.c: libgate/webgwt.h
+
+libgate/gate-zrawc: libgate/gate-zrawc.o
+	$(CXX) $^ -o $@ $(LDFLAGS) -lz
 
 libgate/libgate.a: libgate/wsserver.o libgate/fifo.o libgate/malloc_e.o libgate/gatestr.o libgate/webgwt.o
 	$(AR) $(ARFLAGS) $@ $^
 	
-libgate/webgwt.h libgate/webgwt.c: $(shell echo ../gwt/src/fr/laas/gate/*.java)
+libgate/webgwt.c libgate/webgwt.h: $(shell echo ../gwt/src/fr/laas/gate/*.java)
+	$(MAKE) -f $(MAKEFILE_LIST) libgate/gate-zrawc
 	cd ../gwt; ant build
-	cd ../gwt/war/gate && wget http://www.cnrs.fr/favicon.ico; true
-	cd libgate; here=`pwd`; cd ../../gwt/war/gate && libwebsockets-rawc $${here}/webgwt bin `find -type f`
+	cd ../gwt/war/gate && wget http://www.laas.fr/favicon.ico; true
+	cd libgate; here=`pwd`; cd ../../gwt/war/gate && valgrind $${here}/gate-zrawc $${here}/webgwt bin `find -type f`
+
 
 .SECONDARY: $(BIN:%=%.o)
 

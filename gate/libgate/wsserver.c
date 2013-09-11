@@ -54,6 +54,8 @@
 #include <string.h>
 #include <stdarg.h>
 
+#define ZLIB_CONST 1
+#include <zlib.h>
 #include <libwebsockets.h>
 
 #include "libgate.h"
@@ -63,8 +65,27 @@
 
 #include "lws-cb-list.h"
 
-struct per_session_data_empty
+#define BUFFER_SIZE_REASONABLE		4096
+#define BUFFER_SIZE_INFLATE		4096
+
+struct per_session_data_http
 {
+	binware_s	output;
+	size_t		sent;		// sent (been read) from input data (z or not)
+	
+	// zlib
+	z_stream	zlib;		// zlib data
+	gate_str_t 	zbuf;		// zlib out chunk
+	size_t		zavail;		// available to send from inside zbuf
+};
+
+struct per_session_data_gate
+{
+	const char*	to_send;
+	size_t		user_len;
+	unsigned char	preamble_size;
+	char		preamble[10];	// websocket protocol (LWS_WRITE_HTTP, RFC-6455.5.2)
+	size_t		sent;
 };
 
 /* list of supported protocols and callbacks */
@@ -89,6 +110,10 @@ static	fifo_t					ws_input = NULL;
 static	struct lws_context_creation_info	info;
 static	gate_str_t				psend_line = GATE_STR_INIT;
 static	gate_str_t				output_buffer_lws = GATE_STR_INIT;
+static	const unsigned char			t404 [] = "nothing here";
+static	const binware_s				w404 = { ".html", sizeof(t404), 0, t404 };
+static	const binware_s				binull = { NULL, 0, 0, NULL };
+static	int					protocol_gate_sending = 0;
 
 unsigned long (*gate_serve_external_file) (const char* name, const unsigned char** data);
 
@@ -133,13 +158,53 @@ void print_unhandled_reason (const char* from, int reason)
 	lwsl_debug("unhandled reason %i in %s (no description)\n", reason, from);
 }
 
+
+static int zsession_init (struct per_session_data_http* data)
+{
+	data->zlib.zalloc = Z_NULL;
+	data->zlib.zfree = Z_NULL;
+	data->zlib.opaque = Z_NULL;
+	data->zlib.avail_in = 0;
+	data->zlib.next_in = Z_NULL;
+	data->zavail = 0;
+	if (data->output.compressed_size > 0)
+	{
+		if (inflateInit(&data->zlib) != Z_OK)
+		{
+			lwsl_err("sending http data: zlib initialisation error\n");
+			return 1;
+		}
+
+		gate_str_init(&data->zbuf, BUFFER_SIZE_INFLATE);
+
+#ifndef z_const // should be defined by zlib.h and ZLIB_CONST above
+		data->zlib.next_in = (Bytef*)data->output.data; // ... distro should upgrade zlib
+#else
+		data->zlib.next_in = data->output.data;
+#endif
+		data->zlib.avail_in = data->output.compressed_size;
+		data->zlib.avail_out = 0; // = inflate to do
+		data->zlib.next_out = NULL;
+	}
+	
+	return 0;
+}
+
+static void zsession_release (struct per_session_data_http* data)
+{
+	if (data->output.compressed_size > 0)
+	{
+		gate_str_free(&data->zbuf);
+		inflateEnd(&data->zlib);
+	}
+}
+
 static int callback_http (
-		struct libwebsocket_context * context,
+		struct libwebsocket_context* context,
 		struct libwebsocket *wsi,
 		enum libwebsocket_callback_reasons reason, void *user,
 							   void *in, size_t len)
 {
-	(void)user;
 	int fd = (int)(long)in;
 	
 	switch (reason)
@@ -147,26 +212,24 @@ static int callback_http (
 	
 	case LWS_CALLBACK_HTTP:
 	{
-		static const unsigned char t404 [] = "nothing here";
-		static const binware_s w404 = { ".html", sizeof(t404), t404 };
-		binware_s user;
+		binware_s userbin;
 
 		const binware_s* bin;
 		const char* ext;
 		const char* content_type;
+		unsigned char* bufbase;
+		unsigned char* buf;
 		char* qmark;
-		int ret;
 		
 		lwsl_notice("HTTP URI: '%s'\n", (char *)in);
-		
-		// cut at first '?' from end
-		for (qmark = ((char*)in)+strlen(in); qmark != in && *qmark != '?'; qmark--);
-		if (*qmark == '?')
-			*qmark = 0;
+
+		// cut at first '?' from beginning
+		for (qmark = (char*)in; *qmark && *qmark != '?'; qmark++);
+		*qmark = 0;
 
 		// serve user files first
-		if (gate_serve_external_file && (user.size = gate_serve_external_file(user.name = in, &user.data)))
-			bin = &user;
+		if (gate_serve_external_file && (userbin.size = gate_serve_external_file(userbin.name = in, &userbin.data)))
+			bin = &userbin;
 		else
 		{
 			// default URL
@@ -201,18 +264,109 @@ static int callback_http (
 		else
 			content_type = "text/plain";
 		
-		lwsl_notice("serving '%s'\n", bin->name);
-		ret = libwebsockets_serve_http_bin(context, wsi, bin->data, bin->size, content_type);
-		if (ret)
-		{
-			if (ret < 0)
-				lwsl_err("Failed to send HTTP file '%s'\n", (char*)in);
-			// ret > 0 indicates already finished
-			return -1; // close
-		}
-		return 0; // further automatic libwebsockets processing needed
+		lwsl_notice("http serving '%s'\n", bin->name);
+
+		/*
+		 * send the http headers...
+		 * this won't block since it's the first payload sent
+		 * on the connection since it was established
+		 * (too small for partial)
+		 */
+
+		gate_str_realloc(&output_buffer_lws, BUFFER_SIZE_REASONABLE);
+
+		buf = bufbase = (typeof(buf))output_buffer_lws.str;
+		buf += sprintf((char *)buf,
+				"HTTP/1.0 200 OK\x0d\x0a"
+				"Server: libwebsockets\x0d\x0a"
+				"Content-Type: %s\x0d\x0a"
+				"Content-Length: %lu\x0d\x0a\x0d\x0a",
+				content_type,
+				bin->size);
+		
+		if (libwebsocket_write(wsi, bufbase, buf - bufbase, LWS_WRITE_HTTP) < 0)
+			return -1;
+
+		/*
+		 * book us a LWS_CALLBACK_HTTP_WRITEABLE callback
+		 */
+		struct per_session_data_http* data = user;
+		data->sent = 0;
+		data->output = *bin;
+		if (zsession_init(data) != 0)
+			return -1;
+		
+		libwebsocket_callback_on_writable(context, wsi);
+		
+		break;
 	}
 	
+	case LWS_CALLBACK_HTTP_WRITEABLE:
+		do
+		{
+			struct per_session_data_http* data = user;
+			size_t size_to_send, buflen;
+			char* bufbase;
+			
+			if (data->output.compressed_size == 0)
+			{
+				gate_str_realloc(&output_buffer_lws, BUFFER_SIZE_REASONABLE);
+				bufbase = output_buffer_lws.str;
+				buflen = output_buffer_lws.alloked;
+				
+				// direct send
+				size_to_send = data->output.size - data->sent;
+				if (size_to_send > buflen)
+					size_to_send = buflen;
+				memcpy(bufbase, &data->output.data[data->sent], size_to_send);
+			}
+			else
+			{
+				buflen = data->zbuf.alloked;
+				if (data->zlib.avail_out == 0 && data->zavail == 0) // inflate to do
+				{
+					data->zlib.next_out = (unsigned char*)data->zbuf.str;
+					data->zlib.avail_out = buflen;
+
+					switch (inflate(&data->zlib, Z_NO_FLUSH))
+					{
+						case Z_NEED_DICT:
+						case Z_DATA_ERROR:
+						case Z_MEM_ERROR:
+						case Z_STREAM_ERROR:
+							zsession_release(data);
+							lwsl_err("sending http data: zlib inflate error\n");
+							return -1;
+					}
+					data->zavail = buflen - data->zlib.avail_out;
+				}
+				bufbase = &data->zbuf.str[buflen - data->zlib.avail_out - data->zavail];
+				size_to_send = data->zavail;
+			}
+			
+			ssize_t sent = libwebsocket_write(wsi, (unsigned char*)bufbase, size_to_send, LWS_WRITE_HTTP);
+
+			if (sent < 0)
+			{
+				/* write failed, close conn */
+				lwsl_err("LWS_CALLBACK_HTTP_WRITEABLE: problem sending http data (%s)\n", data->output.name? data->output.name: "not described");
+				zsession_release(data);
+				return -1;
+			}
+			
+			if ((data->sent += sent) == data->output.size)
+			{
+				data->output = binull;
+				data->sent = 0;
+				zsession_release(data);
+				break;
+			}
+			
+			data->zavail -= sent;
+
+		} while (!lws_send_pipe_choked(wsi));
+		break;
+
 	case LWS_CALLBACK_HTTP_FILE_COMPLETION:
 		break;
 	
@@ -257,42 +411,80 @@ static int callback_gate (
 	
 	switch (reason)
 	{
+	case LWS_CALLBACK_ESTABLISHED:
+	{
+		struct per_session_data_gate* session = (struct per_session_data_gate*)user;
+		session->to_send = NULL;
+		break;
+	}
+		
 	case LWS_CALLBACK_SERVER_WRITEABLE:
 	{
-		char* to_send = fifo_getdel(ws_output);
-		if (to_send)
+		struct per_session_data_gate* session = (struct per_session_data_gate*)user;
+
+		if (!session->to_send)
 		{
-			int offset;
-			unsigned int len = strlen(to_send);
-
-			if (len > (typeof(len))0xffff)
+			session->to_send = fifo_getdel(ws_output);
+			assert(session->to_send);
+			protocol_gate_sending++; // we are sending, monothread, no lock
+			session->user_len = strlen(session->to_send);
+			session->sent = 0;
+			session->preamble[0] = 0x81; // text frame(0x01), (first and) last frame(0x80)
+			if (session->user_len < 126)
 			{
-				lwsl_err("line too long for websocket (%l > %l) in wsserver.c:\n('%s')\n", len, (typeof(len))0xffff, to_send);
-				exit(1);
+				session->preamble[1] = session->user_len;
+				session->preamble_size = 2;
 			}
-
-			if (output_buffer_lws.alloked < 4 + len + LWS_SEND_BUFFER_PRE_PADDING + LWS_SEND_BUFFER_POST_PADDING)
-				gate_str_grow(&output_buffer_lws, len + LWS_SEND_BUFFER_PRE_PADDING + LWS_SEND_BUFFER_POST_PADDING);
-
-			output_buffer_lws.str[LWS_SEND_BUFFER_PRE_PADDING + 0] = 0x81; // text frame(0x01), (first and) last frame(0x80)
-			if (len < 126)
+			else if (session->user_len <= 0xffff)
 			{
-				output_buffer_lws.str[LWS_SEND_BUFFER_PRE_PADDING + 1] = len;
-				offset = 2;
+				session->preamble[1] = 126; // size is in the next 2 bytes (network byte order)
+				session->preamble[2] = session->user_len >> 8;
+				session->preamble[3] = session->user_len & 0xff;
+				session->preamble_size = 4;
 			}
 			else
 			{
-				output_buffer_lws.str[LWS_SEND_BUFFER_PRE_PADDING + 1] = 126; // size is in the next 2 bytes (network byte order)
-				output_buffer_lws.str[LWS_SEND_BUFFER_PRE_PADDING + 2] = len >> 8;
-				output_buffer_lws.str[LWS_SEND_BUFFER_PRE_PADDING + 3] = len & 0xff;
-				offset = 4;
+fprintf(stderr, "(check me)\n");
+				int x;
+				session->preamble[1] = 127; // size is in the next 8 bytes (network byte order)
+				for (x = 0; x < 8; x++)
+					session->preamble[2 + x] = (session->user_len >> (56 - (x << 3))) & 0xff;
+				session->preamble_size = 10;
+			}
+		}
+
+		do
+		{
+			ssize_t written;
+			if (session->sent < session->preamble_size)
+				written = libwebsocket_write(wsi, (unsigned char*)session->preamble + session->sent, session->preamble_size - session->sent, LWS_WRITE_HTTP);
+			else
+				written = libwebsocket_write(wsi, (unsigned char*)session->to_send + session->sent - session->preamble_size, session->preamble_size + session->user_len - session->sent, LWS_WRITE_HTTP);
+			if (written < 0)
+			{
+				/* write failed, close conn */
+				free_e(&session->to_send); // zero-ed ptr
+				protocol_gate_sending--; // blorgh, monothread, no lock
+				lwsl_err("LWS_CALLBACK_SERVER_WRITEABLE: problem sending websocket data (%s)\n", session->to_send);
+				return -1;
+			}
+		
+			if (written == 0)
+			{
+				// we will continue later
+				break;
 			}
 
-			memcpy((char*)&output_buffer_lws.str[LWS_SEND_BUFFER_PRE_PADDING + offset], to_send, len);
-			free_e(&to_send);
+			session->sent += written;
+		
+			if (session->sent == session->user_len + session->preamble_size)
+			{
+				free_e(&session->to_send); // zero-ed ptr
+				protocol_gate_sending--; // we sent, monothread, no lock
+				break;
+			}
 
-			libwebsocket_write(wsi, (unsigned char*)&output_buffer_lws.str[LWS_SEND_BUFFER_PRE_PADDING], len + offset, LWS_WRITE_HTTP);
-		}
+		} while (!lws_send_pipe_choked(wsi));
 		break;
 	}
 
@@ -309,6 +501,7 @@ static int callback_gate (
 	default:
 		print_unhandled_reason("cb_gate", reason);
 		break;
+
 	}
 
 	return 0;
@@ -334,12 +527,12 @@ int gate_init (const char* protocol_name)
 
 	protocols[protocol_http].name = "http-only";
 	protocols[protocol_http].callback = callback_http;
-	protocols[protocol_http].per_session_data_size = sizeof(struct per_session_data_empty);
+	protocols[protocol_http].per_session_data_size = sizeof(struct per_session_data_http);
 	protocols[protocol_http].rx_buffer_size = 0;
 
 	protocols[protocol_gate].name = protocol_name? protocol_name: GATE_WS_PROTOCOL;
 	protocols[protocol_gate].callback = callback_gate;
-	protocols[protocol_gate].per_session_data_size = sizeof(struct per_session_data_empty);
+	protocols[protocol_gate].per_session_data_size = sizeof(struct per_session_data_gate);
 	protocols[protocol_gate].rx_buffer_size = 0;
 
 	protocols[protocol_endoflist].callback = NULL;
@@ -353,7 +546,7 @@ int gate_init (const char* protocol_name)
 	ws_output = fifo_create();
 	ws_input = fifo_create();
 	
-	gate_str_init(&psend_line);
+	gate_str_init(&psend_line, 128);
 	
 	gate_serve_external_file = NULL;
 
@@ -395,7 +588,7 @@ int gate_poll_ms (int timeout_ms)
 			
 	do
 	{
-		if (!fifo_is_empty(ws_output))
+		if (!fifo_is_empty(ws_output) || protocol_gate_sending > 0)
 			libwebsocket_callback_on_writable_all_protocol(&protocols[protocol_gate]);
 
 		lwsl_notice("call poll(%ifds, timeout=%ims)\n", count_pollfds, timeout_ms);
@@ -455,7 +648,7 @@ const char* gate_psend (const char* s, ...)
 		va_end(ap);
 		
 		if (too_short)
-			gate_str_grow(&psend_line, 1);
+			gate_str_realloc(&psend_line, psend_line.alloked + 1);
 
 	} while (too_short);
 

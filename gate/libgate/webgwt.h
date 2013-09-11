@@ -12,6 +12,7 @@ typedef struct
 {
 	const char*		name;
 	unsigned long		size;
+	unsigned long		compressed_size;
 	const unsigned char*	data;
 } binware_s;
 

@@ -9,17 +9,10 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
-#build:
-#	dh_auto_configure -- -DWITHOUT_DEBUG=1 -DLINK_TESTAPPS_DYNAMIC=1
-
-override_dh_clean:
-	@dh_clean
-	@rm -rf blob
-
 # use 'make -f debian/rules source' to build source tarball
-source: clean override_dh_clean
+source: clean dh_clean
 	@name=`basename \`pwd\``;					\
-	tarball="`sed -ne 's,^\([^ ]*\)[^(]*(\(.*\)-[0-9]*).*,\1_\2,gp' < debian/changelog | head -1`.orig.tar.gz";	\
+	tarball="`sed -ne 's,^\([^ ]*\)[^(]*(\(.*\)-[0-9]*).*,\1_\2,g' -e '1p' < debian/changelog`.orig.tar.gz";	\
 	if test -f "../$$tarball"; then					\
 		echo "*** ../$$tarball already exists, move it away";	\
 		false;							\

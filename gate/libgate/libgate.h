@@ -68,7 +68,6 @@ typedef struct gate_str_s
 #define		GATE_WS_PROTOCOL	"gate"
 #define		GATE_PERROR_HEADER	"gate: "
 #define		GATE_DEFAULT_PORT_WS	7681
-#define		GATE_STR_ALLOC_SIZE	128
 #define		GATE_STR_INIT		{ NULL, 0 }
 #define		GATE_TALKING_PROTOCOL	"# gate talking - protocol version 20130326"
 #define		GATE_TALKING		"# gate talking"
@@ -91,8 +90,8 @@ struct pollfd*	gate_get_pollfd		(int fd);
 // may be NULL, user must call free on result
 char*		gate_receive		(void);
 
-gate_str_t*	gate_str_init		(gate_str_t* str);
-void		gate_str_grow		(gate_str_t* str, size_t desired_size);
+gate_str_t*	gate_str_init		(gate_str_t* str, size_t size);
+void		gate_str_realloc	(gate_str_t* str, size_t size);
 void		gate_str_free		(gate_str_t* str);
 
 const char*	gate_send		(const char* output);
