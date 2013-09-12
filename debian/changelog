@@ -1,3 +1,11 @@
+gate (0.9.130912-1) precise; urgency=low
+
+  * zlib used to compress embedded js pages
+  * some bugfixes
+  * git SHA1: 22479162cc23e8e51082eccf3d76066ed6978d1c
+
+ -- David Gauchard <gauchard@laas.fr>  Thu, 12 Sep 2013 10:00:00 +0200
+
 gate (0.9.130730-1) precise; urgency=low
 
   * (cleanly) remove the need for gwt to build the project
