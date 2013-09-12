@@ -7,6 +7,7 @@
  * Copyright CNRS
  * Contributors:
  * David Gauchard <gauchard@laas.fr>	2013-01-01
+ * Adrien Thibaud <adrien.thibaud@etu.enseeiht.fr>	2013-09-01
  * 
  * This software is a computer program whose purpose is to
  * provide a "Graphical Access To Exterior" (GATE).  The goal
