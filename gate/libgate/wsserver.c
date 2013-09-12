@@ -113,7 +113,6 @@ static	gate_str_t				output_buffer_lws = GATE_STR_INIT;
 static	const unsigned char			t404 [] = "nothing here";
 static	const binware_s				w404 = { ".html", sizeof(t404), 0, t404 };
 static	const binware_s				binull = { NULL, 0, 0, NULL };
-static	int					protocol_gate_sending = 0;
 
 unsigned long (*gate_serve_external_file) (const char* name, const unsigned char** data);
 
@@ -284,7 +283,7 @@ static int callback_http (
 				content_type,
 				bin->size);
 		
-		if (libwebsocket_write(wsi, bufbase, buf - bufbase, LWS_WRITE_HTTP) < 0)
+		if (libwebsocket_write(wsi, bufbase, buf - bufbase, LWS_WRITE_HTTP) != buf - bufbase)
 			return -1;
 
 		/*
@@ -302,31 +301,25 @@ static int callback_http (
 	}
 	
 	case LWS_CALLBACK_HTTP_WRITEABLE:
+	{
+		struct per_session_data_http* data = user;
+		size_t size_to_send;
+		const unsigned char* bufbase;
+
 		do
 		{
-			struct per_session_data_http* data = user;
-			size_t size_to_send, buflen;
-			char* bufbase;
-			
 			if (data->output.compressed_size == 0)
 			{
-				gate_str_realloc(&output_buffer_lws, BUFFER_SIZE_REASONABLE);
-				bufbase = output_buffer_lws.str;
-				buflen = output_buffer_lws.alloked;
-				
 				// direct send
+				bufbase = &data->output.data[data->sent];
 				size_to_send = data->output.size - data->sent;
-				if (size_to_send > buflen)
-					size_to_send = buflen;
-				memcpy(bufbase, &data->output.data[data->sent], size_to_send);
 			}
 			else
 			{
-				buflen = data->zbuf.alloked;
 				if (data->zlib.avail_out == 0 && data->zavail == 0) // inflate to do
 				{
 					data->zlib.next_out = (unsigned char*)data->zbuf.str;
-					data->zlib.avail_out = buflen;
+					data->zlib.avail_out = data->zbuf.alloked;
 
 					switch (inflate(&data->zlib, Z_NO_FLUSH))
 					{
@@ -338,9 +331,9 @@ static int callback_http (
 							lwsl_err("sending http data: zlib inflate error\n");
 							return -1;
 					}
-					data->zavail = buflen - data->zlib.avail_out;
+					data->zavail = data->zbuf.alloked - data->zlib.avail_out;
 				}
-				bufbase = &data->zbuf.str[buflen - data->zlib.avail_out - data->zavail];
+				bufbase = (const unsigned char*)&data->zbuf.str[data->zbuf.alloked - data->zlib.avail_out - data->zavail];
 				size_to_send = data->zavail;
 			}
 			
@@ -362,10 +355,17 @@ static int callback_http (
 				break;
 			}
 			
-			data->zavail -= sent;
+			if (data->output.compressed_size > 0)
+				data->zavail -= sent;
 
 		} while (!lws_send_pipe_choked(wsi));
+		
+		if (data->sent != data->output.size)
+			// not finished 
+			libwebsocket_callback_on_writable(context, wsi);
+		
 		break;
+	}
 
 	case LWS_CALLBACK_HTTP_FILE_COMPLETION:
 		break;
@@ -426,7 +426,6 @@ static int callback_gate (
 		{
 			session->to_send = fifo_getdel(ws_output);
 			assert(session->to_send);
-			protocol_gate_sending++; // we are sending, monothread, no lock
 			session->user_len = strlen(session->to_send);
 			session->sent = 0;
 			session->preamble[0] = 0x81; // text frame(0x01), (first and) last frame(0x80)
@@ -464,7 +463,6 @@ fprintf(stderr, "(check me)\n");
 			{
 				/* write failed, close conn */
 				free_e(&session->to_send); // zero-ed ptr
-				protocol_gate_sending--; // blorgh, monothread, no lock
 				lwsl_err("LWS_CALLBACK_SERVER_WRITEABLE: problem sending websocket data (%s)\n", session->to_send);
 				return -1;
 			}
@@ -480,11 +478,15 @@ fprintf(stderr, "(check me)\n");
 			if (session->sent == session->user_len + session->preamble_size)
 			{
 				free_e(&session->to_send); // zero-ed ptr
-				protocol_gate_sending--; // we sent, monothread, no lock
 				break;
 			}
 
 		} while (!lws_send_pipe_choked(wsi));
+
+		if (session->sent != session->user_len + session->preamble_size)
+			// not finished 
+			libwebsocket_callback_on_writable(context, wsi);
+		
 		break;
 	}
 
@@ -588,7 +590,7 @@ int gate_poll_ms (int timeout_ms)
 			
 	do
 	{
-		if (!fifo_is_empty(ws_output) || protocol_gate_sending > 0)
+		if (!fifo_is_empty(ws_output))
 			libwebsocket_callback_on_writable_all_protocol(&protocols[protocol_gate]);
 
 		lwsl_notice("call poll(%ifds, timeout=%ims)\n", count_pollfds, timeout_ms);
