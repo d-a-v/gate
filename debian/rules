@@ -10,7 +10,7 @@
 #export DH_VERBOSE=1
 
 # use 'make -f debian/rules source' to build source tarball
-source: clean dh_clean
+source: clean
 	@name=`basename \`pwd\``;					\
 	tarball="`sed -ne 's,^\([^ ]*\)[^(]*(\(.*\)-[0-9]*).*,\1_\2,g' -e '1p' < debian/changelog`.orig.tar.gz";	\
 	if test -f "../$$tarball"; then					\
