@@ -1,3 +1,4 @@
+make -C gate -f simple.mak clean
 make clean distclean 2> /dev/null
 rm -rf \
 	*~ */*~ */*/*~ \

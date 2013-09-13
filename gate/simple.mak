@@ -22,13 +22,14 @@ LDFLAGS += -g
 CFLAGS	+= -Wall -Wextra -Werror
 CFLAGS	+= -Itemp -Ilibgate
 ARFLAGS	= rcs
-LIBS	= -Llibgate -lwebsockets -llockdev -lssl
+LIBS	= -Llibgate -lwebsockets -lssl
 
 ifeq ($(shell test -r /usr/include/lockdev.h && echo ok),ok)
 $(shell mkdir -p temp && echo "#define HAVE_LIBLOCKDEV 1" > temp/config.h)
+LIBS	+= -llockdev
 else
-$(shell mkdir -p temp && echo "#undef HAVE_LIBLOCKDEV" > temp/config.h)
-$(warning notice: lockdev is not installed (pkg liblockdev-dev))
+$(shell mkdir -p temp && echo "/* #undef HAVE_LIBLOCKDEV */" > temp/config.h)
+$(warning notice: optional lockdev library is not installed (debpkg liblockdev1-dev))
 endif
 
 ###############

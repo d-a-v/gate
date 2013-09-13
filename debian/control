@@ -11,7 +11,7 @@ Vcs-Browser: https://github.com/d-a-v/gate.git
 Package: gate
 Section: misc
 Architecture: any
-Depends: libgate, ${shlibs:Depends}
+Depends: libgate, ${shlibs:Depends}, ${misc:Depends}
 Description: Graphical Access To Exterior made simple
  gate generic http server and serial/TCP gateway
 
@@ -39,6 +39,6 @@ Description: Graphical Access To Exterior made simple
 Package: gate-examples
 Section: misc
 Architecture: any
-Depends: libgate, ${shlibs:Depends}
+Depends: libgate, ${shlibs:Depends}, ${misc:Depends}
 Description: Graphical Access To Exterior made simple
  tetris inside your browser
