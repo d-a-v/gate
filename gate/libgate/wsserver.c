@@ -425,7 +425,11 @@ static int callback_gate (
 		if (!session->to_send)
 		{
 			session->to_send = fifo_getdel(ws_output);
-			assert(session->to_send);
+			if (!session->to_send)
+			{
+fprintf(stderr, "(gui is in weird network mood (old connections are likely not closed) try reset it)\n");
+				break;
+			}
 			session->user_len = strlen(session->to_send);
 			session->sent = 0;
 			session->preamble[0] = 0x81; // text frame(0x01), (first and) last frame(0x80)
