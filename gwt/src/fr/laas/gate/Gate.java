@@ -568,6 +568,7 @@ public class Gate implements EntryPoint
 		send("#\tfg <color>\tforeground color (*3)");
 		send("#\tbg <color>\tbackground color (*3)");
 		send("#\ttitle <t>\tupdate title (in parent, if applicable)");
+		send("#\ttooltip <t>\tset tip");
 		send("#\tkeepratio\tkeep aspect ratio (*4)");
 		send("#\tfreeratio\tfree aspect ratio");
 		send("#\tgap <px>\tplain objects border size (*5)");
@@ -858,6 +859,9 @@ public class Gate implements EntryPoint
 			
 		if (words.checkNextAndForward("title"))
 			obj.getGOParent().setSonTitle(obj, words.getString(cmdlineTitle));
+		
+		else if (words.checkNextAndForward("tooltip"))
+			obj.getWidget().setTitle(words.getString(cmdlineTitle)); // XXX not cmdlineTitle
 		
 		else if (words.checkNextAndForward("keepratio"))
 		{
