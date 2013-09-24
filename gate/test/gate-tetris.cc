@@ -404,7 +404,9 @@ int main ()
 	int checking = false;
 	int delline = -1;
 	
-	printf("http://localhost:%i/?server=localhost:%i\n", port, port);
+	printf("try http://localhost:%i/?server=localhost:%i\n"
+	       "or http://localhost:%i/?run\n",
+	       port, port, port);
 	
 	for (int x = 0; x < SX; x++)
 		for (int y = 0; y < SY; y++)

@@ -1416,6 +1416,8 @@ public class Gate implements EntryPoint
 
 		String server = Window.Location.getParameter("server");
 		if (server != null && !server.equals("undefined"))
-				newConnection(server);
+			newConnection(server);
+		else if (Window.Location.getParameter("run") != null)
+			newConnection(Window.Location.getHost());
 	}
 }
