@@ -319,12 +319,12 @@ public class Gate implements EntryPoint
 		
 		if (name.equals("reset"))
 		{
+			stopAllConnections();
+			
 			uiRefreshNeeded = null;
 			tryMeInvoked = false;
 			calibrateInvoked = false;
 			
-			//names.clear();
-			//RootLayoutPanel.get().remove(guiRoot);
 			clear(guiRoot);
 			guiRoot = null;
 			
@@ -1115,6 +1115,12 @@ public class Gate implements EntryPoint
 			parseMulti(h.getIntfObject().getName() + " update bg lightgray");
 	    	h.close();
 	    }
+	}
+	
+	private void stopAllConnections ()
+	{
+		for (WebSocketClient h: remoteHistory)
+			stopConnection(h);
 	}
 	
 	private void newConnection (String h)
