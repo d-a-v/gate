@@ -260,8 +260,9 @@ class GuiGFX extends GuiPanel
 				final float nextx = words.getPosFloat(Gate.cmdlineCenterX);
 				final float nexty = words.getPosFloat(Gate.cmdlineCenterY);
 				
-				gfx.put(name, g = new Gfx(new Path(0,0), x1, y1, x1, nexty));
+				gfx.put(name, g = new Gfx(new Path(0,0), x1, y1, 0, 0));
 				g.path = new ArrayList<Gfx.xy>();
+				g.path.add(g.new xy(nextx, y1));
 				g.path.add(g.new xy(nextx, nexty));
 				g.path.add(g.new xy(x1, nexty));
 				g.path.add(g.new xy(x1, y1));
