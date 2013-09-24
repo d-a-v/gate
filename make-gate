@@ -40,6 +40,8 @@ try and launch
 	./bin-tetris
 then make your browser points to
 	http://`hostname`:1234?server=`hostname`:1234
+or
+	http://`hostname`:1234?run
 
 EOF
 }
