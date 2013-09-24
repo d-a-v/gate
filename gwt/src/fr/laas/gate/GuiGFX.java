@@ -142,6 +142,11 @@ class GuiGFX extends GuiPanel
 			;
 	}
 	
+	public DrawingArea getDrawingArea ()
+	{
+		return area;
+	}
+	
 	private void updateColor (String color, boolean isFill, final Gfx g)
 	{
 		final int comma = color.indexOf(',');
