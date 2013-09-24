@@ -72,29 +72,29 @@ class Words
 
 	public class CoordinateElement
 	{
-		private float value;
-		private Place.Type type;
+		private final float value;
+		private final Place.Type type;
 		
 		public float		getValue ()	{ return value; }
 		public Place.Type	getType ()	{ return type; }
 		
-		public CoordinateElement (float value, Place.Type type)
+		public CoordinateElement (final float value, final Place.Type type)
 		{
 			this.value = value;
 			this.type = type;
 		}
 	}
 
-	private List<String> array;
+	private final List<String> array;
 	private int currentIdx;
 	
-	public Words (String line)
+	public Words (final String line)
 	{
 		// http://stackoverflow.com/questions/366202/regex-for-splitting-a-string-using-space-when-not-surrounded-by-single-or-double
 		// http://stackoverflow.com/questions/6323024/gwt-2-1-regex-class-to-parse-freetext
 		// + rework
 		array = new ArrayList<String>();
-		RegExp regex = RegExp.compile("([^\\s\"']+)|\"([^\"]*)\"|'([^']*)'", "g");
+		final RegExp regex = RegExp.compile("([^\\s\"']+)|\"([^\"]*)\"|'([^']*)'", "g");
 		for (MatchResult result = regex.exec(line); result != null; result = regex.exec(line))
 			for (int i = 1; i < result.getGroupCount(); i++)
 				if (result.getGroup(i) != null)
@@ -108,7 +108,7 @@ class Words
 	public String toString ()
 	{
 		String value = "";
-		for (String w: array)
+		for (final String w: array)
 			value += "'" + w + "' ";
 		return value;
 	}
@@ -123,12 +123,12 @@ class Words
 		return array.size();
 	}
 	
-	public String showDetachedWord (int idx)
+	public String showDetachedWord (final int idx)
 	{
 		return array.get(idx); 
 	}
 	
-	public Words rewind (int howMuch)
+	public Words rewind (final int howMuch)
 	{
 		currentIdx -= howMuch;
 		return this;
@@ -141,16 +141,22 @@ class Words
 		return currentIdx < array.size();
 	}
 	
-	public boolean checkNextAndForward (String next)
+	public boolean checkNext (final String next)
 	{
 		boolean check;
 		check = (hasNext() && array.get(currentIdx).equals(next));
+		return check;
+	}
+	
+	public boolean checkNextAndForward (final String next)
+	{
+		final boolean check = checkNext(next);
 		if (check)
 				currentIdx++;
 		return check;
 	}
 	
-	public String checkSubNextAndForward (String subNext)
+	public String checkSubNextAndForward (final String subNext)
 	{
 		String ret;
 		if (hasNext() && (ret = array.get(currentIdx)).substring(0, subNext.length()).equals(subNext))
@@ -181,54 +187,54 @@ class Words
 		return (hasNext() && array.get(currentIdx).matches(regexpRelFloat));
 	}
 
-	public String getString (String error) throws WordsException
+	public String getString (final String error) throws WordsException
 	{
 		// clean for potential / known problems
 		return getRawString(error).replace(";", "");
 	}
 	
-	public String getRawString (String error) throws WordsException
+	public String getRawString (final String error) throws WordsException
 	{
 		if (!hasNext() /*|| array.get(currentIdx).length() == 0*/)
 			throw new WordsException(this, error);
 		return array.get(currentIdx++);
 	}
 	
-	public float getRelFloat (String error) throws WordsException
+	public float getRelFloat (final String error) throws WordsException
 	{
-		String word = getString(error);
+		final String word = getString(error);
 		if (word.matches(regexpRelFloat))
 			return new Float(word).floatValue();
 		throw new WordsException(this, error);
 	}
 
-	public float getPosFloat (String error) throws WordsException
+	public float getPosFloat (final String error) throws WordsException
 	{
-		String word = getString(error);
+		final String word = getString(error);
 		if (word.matches(regexpPosFloat))
 			return new Float(word).floatValue();
 		throw new WordsException(this, error);
 	}
 
-	public int getRelInt (String error) throws WordsException
+	public int getRelInt (final String error) throws WordsException
 	{
-		String word = getString(error);
+		final String word = getString(error);
 		if (word.matches(regexpRelInt))
 			return new Integer(word).intValue();
 		throw new WordsException(this, error);
 	}
 
-	public int getPosInt (String error) throws WordsException
+	public int getPosInt (final String error) throws WordsException
 	{
-		String word = getString(error);
+		final String word = getString(error);
 		if (word.matches(regexpPosInt))
 			return new Integer(word).intValue();
 		throw new WordsException(this, error);
 	}
 
-	public CoordinateElement getCoordinate (String error) throws WordsException 
+	public CoordinateElement getCoordinate (final String error) throws WordsException 
 	{
-		String word = getString(error); 
+		final String word = getString(error); 
 		if (word.matches(regexpPixel))
 			return new CoordinateElement(new Float(word.substring(0, word.length() - 1)).floatValue(), Place.Type.PIXEL);
 		if (word.matches(regexpMm))
