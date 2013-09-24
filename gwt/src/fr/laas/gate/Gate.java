@@ -117,9 +117,11 @@ public class Gate implements EntryPoint
 	
 	public static final int			ppiMin = 50;
 	public static final int			ppiMax = 700;
+	public static final boolean		defaultTouchScreen = false;
 
 	private	 static boolean			frozen = false;
-	private static Gate						w;
+	private static boolean			touchScreen = defaultTouchScreen;
+	private static Gate				w;
 		
 	public static float				ppi, ppiV, ppiH;
 	public static boolean				horizontal;
@@ -141,6 +143,16 @@ public class Gate implements EntryPoint
 	public static final boolean isFrozen ()
 	{
 		return frozen;
+	}
+	
+	public static final IntfObject getO (String name)
+	{
+		return getW().names.get(name);
+	}
+	
+	public static final boolean onTouchScreen ()
+	{
+		return touchScreen; 
 	}
 		
 	///////////////////////////////////////////////////////
@@ -216,8 +228,8 @@ public class Gate implements EntryPoint
 
 		helpers.put("sliderbar", new IntfHelper() 
 		{
-			public IntfObject	starter (final IntfObject p, final String n) { return new GuiSliderBar(p, n); }
-			public String		help	() { return GuiSliderBar.help(); }
+			public IntfObject	starter (final IntfObject p, final String n) { return new GuiSliderTouch(p, n); }
+			public String		help	() { return GuiSliderTouch.help(); }
 		});
 
 		helpers.put("image", new IntfHelper() 
@@ -374,10 +386,11 @@ public class Gate implements EntryPoint
 		}
 	}
 
+	//XXX todo: a growing string better than a string list ? (less code)
 	private int				waitForAPI = 0;
 	private LinkedList<String> 	delayed = new LinkedList<String>();
 
-	private final void parseMulti (final String multi)
+	public final void parseMulti (final String multi)
 	{
 		if (multi != null)
 			for (final String one: multi.split(";"))
@@ -698,6 +711,9 @@ public class Gate implements EntryPoint
 	
 	public boolean uiRefreshRec (final IntfObject obj, final int sub)
 	{
+		// do not replace "updated = false" by "return false"
+		// it breaks at least "set <n>" in GuiSliderTouch inside creation line
+		
 		if (frozen)
 			return false;
 		
