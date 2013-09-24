@@ -130,8 +130,8 @@ public class Gate implements EntryPoint
 			
 	private final HashMap<String, IntfObject>	names = new HashMap<String, IntfObject>();
 	private final HashMap<String, IntfHelper>	helpers = new HashMap<String, IntfHelper>();
-	private       GuiRoot						guiRoot = null;
-	private       IntfObject					uiRefreshNeeded = null;
+	private			GuiRoot						guiRoot = null;
+	private			IntfObject					uiRefreshNeeded = null;
 	
 	///////////////////////////////////////////////////////
 
@@ -335,7 +335,6 @@ public class Gate implements EntryPoint
 		
 		if (name.equals("refresh"))
 		{
-			//debug("refresh from cmdrefresh");
 			uiRefresh(uiRefreshNeeded);
 			uiRefreshNeeded = null;
 			return true;
@@ -343,7 +342,6 @@ public class Gate implements EntryPoint
 		
 		if (name.equals("redraw"))
 		{
-			//debug("refresh from cmdredraw");
 			uiRefresh(guiRoot.getDisplayedSon());
 			uiRefreshNeeded = null;
 			return true;
