@@ -681,7 +681,7 @@ public class Gate implements EntryPoint
 	// called on external events like resize, or user command 'refresh'/'redraw'
 	public void uiRefresh (final IntfObject obj)
 	{
-		parseMulti("remote_pvalue update text 'ppi=" + ppi + " h=" + horizontal + "'");
+		//parseMulti("remote_pvalue update text 'ppi=" + ppi + " h=" + horizontal + "'");
 		
 		//debug("refresh " + (obj==null? "null": obj.getName()));
 		if (obj != null && !uiRefreshRec(obj, 0) && !frozen)
