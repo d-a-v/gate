@@ -1044,7 +1044,7 @@ public class Gate implements EntryPoint
                 + "remote_login add remote_playground panel;"
                 + "remote_title add remote_login button disable w 60 h 20 above nothing leftof nothing text 'Remote connect' fg white bg black;"
                 + "remote_tryme add remote_login button text 'try me !' h 20 w 20 above nothing rightof remote_title above nothing fg white bg lightgrey;"
-                + "remote_cal add remote_login button text 'cal' h 20 above nothing rightof remote_tryme above nothing fg white bg red;"
+                + "remote_setup add remote_login button text 'setup' h 20 above nothing rightof remote_tryme above nothing fg white bg red;"
                 + "remote_value add remote_login text w 70 h 18 above nothing rightof nothing below remote_title text '" + remoteValue + "';"
                 + "remote_text add remote_login button h 20 above nothing leftof remote_value below remote_title text host:port disable;"
                 + "remote_pvalue add remote_login text w 70 h 18 above nothing rightof nothing below remote_text;"
@@ -1252,7 +1252,7 @@ public class Gate implements EntryPoint
 
 			/////////////////////////////////////////////////////////
 
-			else if (  (cal_remote = w.checkNextAndForward("remote_cal"))
+			else if (  (cal_remote = w.checkNextAndForward("remote_setup"))
 			         || (cal_slider = w.checkNextAndForward("cal_slider"))
 			         || (cal_ppi = w.checkNextAndForward("cal_ppi"))
 			         )
@@ -1267,10 +1267,11 @@ public class Gate implements EntryPoint
                                + "cal_screen add Calibration panel above cal_slider rightof cal_rulers;"
                                + "cal_ppi add cal_screen text h 10 right above nothing leftof nothing w 15;"
                                + "cal_ppmm add cal_screen text h 10 right above nothing leftof nothing below cal_ppi w 15 disable;"
-                               + "cal_back add cal_screen button text 'ok!' bg black fg red h 20 w 20 rightof nothing above nothing;"
-                               + "cal_in add cal_screen text h 10 above nothing rightof cal_ppi leftof cal_back disable;"
-                               + "cal_mm add cal_screen text h 10 above nothing rightof cal_ppmm below cal_in leftof cal_back disable;"
-                               + "cal_gfx add cal_screen gfx gap 0 w 100 leftof nothing below cal_mm keepratio;"
+                               + "cal_in add cal_screen text h 10 above nothing rightof cal_ppi disable;"
+                               + "cal_mm add cal_screen text h 10 above nothing rightof cal_ppmm below cal_in disable;"
+                               + "cal_mobile add cal_screen checkbox text 'touchscreen' h 10 w 50 leftof nothing above nothing below cal_mm " + (touchScreen? "check": "uncheck") + ";"
+                               + "cal_back add cal_screen button text 'ok!' bg black fg red h 10 rightof cal_mobile above nothing below cal_mm;"
+                               + "cal_gfx add cal_screen gfx gap 0 w 100 leftof nothing below cal_back keepratio;"
                                + "cal_gfx update add screen rectangle 0 0 100 100 color screen blue;"
                                + "cal_gfx update add diag arrow 10 90 80 20 color diag white;"
                                + "cal_gfx update add horz arrow 10 90 90 90 color horz white;"
@@ -1317,6 +1318,9 @@ public class Gate implements EntryPoint
 				
 			}
 
+			else if (w.checkNextAndForward("cal_mobile"))
+				touchScreen = w.getPosInt("check") != 0;
+
 			else if (w.checkNextAndForward("cal_back"))
 			{
 				if (horizontal)
@@ -1329,6 +1333,8 @@ public class Gate implements EntryPoint
 					storage.setItem("ppiV", "" + ppi);
 					ppiV = ppi;
 				}
+				
+				storage.setItem("touchscreen",  touchScreen? "1": "0");
 					
 			    guiRoot.back();
 			    clear(names.get("Calibration"));
@@ -1435,6 +1441,12 @@ public class Gate implements EntryPoint
         	        ppiV = storedPPI;
 			} catch (NumberFormatException e) { }
 
+        	touchScreen = defaultTouchScreen;
+        	String touchScreenStr = storage.getItem("touchscreen");
+        	if (touchScreenStr != null) try
+        	{
+        		touchScreen = new Integer(touchScreenStr).intValue() != 0;
+        	} catch (NumberFormatException e) { }
         }
 		onResize_PPIfromHV();
 
