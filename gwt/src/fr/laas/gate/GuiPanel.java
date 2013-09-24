@@ -103,10 +103,22 @@ class GuiPanel extends AbsolutePanel implements IntfObject
 	public static String help ()
 	{
 		return
-				   "#\tscrollable\tenable scrollbars"
+					  "#\tscrollable\tenable scrollbars"
+		+ Gate.endl	+ "#\thiddenscrollbars\thide scrollbars (remains scrollable)"
 		+ Gate.endl + "#\t\t\traise 'gap' attribute and/or reduce sizes"
 		+ Gate.endl + "#\t\t\tto show scrollbars when objects are spread"
 		+ Gate.endl + "#\t\t\tout of bounds";
+	}
+	
+	protected void setScrollable ()
+	{
+		// scrollable if elements are put outside the bounds
+		getElement().getStyle().setOverflow(Overflow.AUTO);		
+	}
+	
+	protected void hideScrollBars ()
+	{
+		getElement().getStyle().setOverflow(Overflow.HIDDEN);
 	}
 		
 	public boolean update (Words words) throws WordsException
@@ -114,8 +126,9 @@ class GuiPanel extends AbsolutePanel implements IntfObject
 		if (words == null)
 			return true;
 		if (words.checkNextAndForward("scrollable"))
-			// scrollable if elements are put outside the bounds
-			getElement().getStyle().setOverflow(Overflow.AUTO);
+			setScrollable();
+		if (words.checkNextAndForward("hiddenscrollbars"))
+			hideScrollBars();
 		else 
 			return false;
 		return true;
