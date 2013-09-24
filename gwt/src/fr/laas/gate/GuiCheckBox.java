@@ -6,7 +6,8 @@
  * 
  * Copyright CNRS
  * Contributors:
- * David Gauchard <gauchard@laas.fr>	2013-01-01
+ * Adrien Thibaud <adrien.thibaud@etu.enseeiht.fr> 2013-09-01
+ * David Gauchard <gauchard@laas.fr> 2013-09-01
  * 
  * This software is a computer program whose purpose is to
  * provide a "Graphical Access To Exterior" (GATE).  The goal
@@ -79,6 +80,10 @@ class GuiCheckBox extends CheckBox implements IntfObject
 	public Place			getPlace	()	{ return place; }
 	public List<IntfObject>	getSons		()	{ return null; }
 
+	private void sendValue (boolean checked)
+	{
+		Gate.getW().send("'" + getName() + "' " + (checked? "1": "0"));		
+	}
 	
 	public GuiCheckBox (IntfObject parent, String name)
 	{
@@ -96,7 +101,7 @@ class GuiCheckBox extends CheckBox implements IntfObject
 		{
 			public void onClick (ClickEvent event)
 			{
-				Gate.getW().send("'" + getName() + "'");
+				sendValue(((CheckBox)(event.getSource())).getValue());
 			}
 		});
 	}
@@ -104,11 +109,11 @@ class GuiCheckBox extends CheckBox implements IntfObject
 	public static String help ()
 	{
 		return
-					    "# \ttext <t>\tchange text in button"
-			+ Gate.endl + "# \tenable\tenable the check box"
-			+ Gate.endl + "# \tdisable\tdisable the check box"
-			+ Gate.endl + "# \ttrue\tcheck the check box"
-			+ Gate.endl + "# \tfalse\tuncheck the check box"
+					      "#\ttext <t>\tchange text in button"
+			+ Gate.endl + "#\tenable\t\tenable the check box"
+			+ Gate.endl + "#\tdisable\t\tdisable the check box"
+			+ Gate.endl + "#\tcheck\t\tcheck the check box"
+			+ Gate.endl + "#\tuncheck\t\tuncheck the check box"
 			;
 	}
 	
@@ -123,10 +128,16 @@ class GuiCheckBox extends CheckBox implements IntfObject
 			setEnabled(true);
 		else if (words.checkNextAndForward("disable"))
 			setEnabled(false);
-		else if (words.checkNextAndForward("true"))
+		else if (words.checkNextAndForward("check"))
+		{
 			setValue(true);
-		else if (words.checkNextAndForward("false"))
+			sendValue(true);
+		}
+		else if (words.checkNextAndForward("uncheck"))
+		{
 			setValue(false);
+			sendValue(false);
+		}
 		else
 			return false;
 		return true;
