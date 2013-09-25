@@ -53,6 +53,7 @@ package fr.laas.gate;
 
 // TODO
 // check gwt-mobile to get rid of timer
+// RESIZE bug
 
 import org.vaadin.gwtgraphics.client.DrawingArea;
 import com.google.gwt.event.dom.client.MouseDownEvent;
@@ -391,10 +392,6 @@ class GuiSliderTouch extends GuiPanel
 	
 	public boolean redraw ()
 	{
-		if (getOffsetWidth() < 1)
-			// not ready
-			return false;
-		
 		super.redraw();
 		if (cursorW < 0) 
 		{
@@ -406,6 +403,8 @@ class GuiSliderTouch extends GuiPanel
 			startBuggyTouchTimer();
 			return false;
 		}
+Gate.debug("rescroll " + value);
+setTo(value); // rescroll
 		return doPending();
 	}
 

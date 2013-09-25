@@ -682,7 +682,7 @@ public class Gate implements EntryPoint
 		//parseMulti("remote_pvalue update text 'ppi=" + ppi + " h=" + horizontal + "'");
 		
 		//debug("refresh " + (obj==null? "null": obj.getName()));
-		if (obj != null && !uiRefreshRec(obj, 0) && !frozen)
+		if (obj != null && !frozen && !uiRefreshRec(obj))
 		{
 			// refresh too soon, try again in a sec
 			debug("setting timer for later refresh");
@@ -708,33 +708,31 @@ public class Gate implements EntryPoint
 		}
 	}
 	
-	public boolean uiRefreshRec (final IntfObject obj, final int sub)
+	public boolean uiRefreshRec (final IntfObject obj)
 	{
-		// do not replace "updated = false" by "return false"
-		// it breaks at least "set <n>" in GuiSliderTouch inside creation line
-		
 		if (frozen)
 			return false;
-		
-		boolean updated = true;
-		
+				
 		final List<IntfObject> sons = obj.getSons();
 
 		if (obj.getGOParent() != null)
 			if (!obj.getPlace().uiRefreshInsideParent())
-				updated = false;
-		
-		if (!obj.redraw())
-			updated = false;
-		
+				return false;
+						
+		if (   (   isInsideVisibleTab(obj) //XXX XXX CACHEME
+				&& (obj.getWidget().getOffsetWidth() < 1 || obj.getWidget().getOffsetHeight() < 1))
+			|| !obj.redraw())
+		{
+			return false;
+		}
+
 		// recursive call on sons
 		if (sons != null)
 			for (final IntfObject son: sons)
-				//debug("rec " + obj.getName() + " -> " + son.getName());
-				if (!uiRefreshRec(son, sub + 1))
-					updated = false;
+				if (!uiRefreshRec(son))
+					return false;
 		
-		return updated;
+		return true;
 	}
 	
 	///////////////////////////////////////////////////////
