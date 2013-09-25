@@ -451,8 +451,8 @@ class Place
 			object.getWidget().getElement().getStyle().setProperty("minHeight", sySize);
 			object.getWidget().getElement().getStyle().setProperty("maxHeight", sySize);
 		}
-		else if (object instanceof SliderBar)
-			((SliderBar)object).onResize(pxSize, pySize);
+		//else if (object instanceof SliderBar)
+		//	((SliderBar)object).onResize(pxSize, pySize);
 
 		// update position
 		object.getGOParent().setSonPosition(object);
