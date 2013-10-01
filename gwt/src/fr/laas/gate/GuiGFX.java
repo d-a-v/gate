@@ -134,8 +134,8 @@ class GuiGFX extends GuiPanel
 			+ Gate.endl + "# \t\t  - line      - x1 y1 x2 y2"
 			+ Gate.endl + "# \t\t  - arrow     - x1 y1 x2 y2"
 			+ Gate.endl + "# \t\t  - path      - x1 y1 x2 y2 [ x3 y3 [ ... ] ]"
-			+ Gate.endl + "# \t\t  - text      - x y yourText size"
-			+ Gate.endl + "# \t\t  - image      - x y width height href"
+			+ Gate.endl + "# \t\t  - text      - x y width height text"
+			+ Gate.endl + "# \t\t  - image     - x y width height href"
 			+ Gate.endl + "# \t\t* color is english/#rgb/#rrggbb[,opacity]"
 			+ Gate.endl + "# \t\t\tex: red,0.5 = #f00,0.5 = #ff0000,0.5"
 			+ Gate.endl + "# \t\t\tex: blue = blue,1 = #00f = #0000ff,1"
@@ -192,11 +192,13 @@ class GuiGFX extends GuiPanel
 		if (words == null)
 			return true;
 		
-		if  (words.checkNextAndForward("del"))
+		if (words.checkNextAndForward("del"))
 		{
 			final String name = words.getString(Gate.cmdlineName);
-			if (gfx.remove(name) == null)
+			final Gfx g = gfx.remove(name);
+			if (g == null)
 				return Gate.getW().error(words, -1, Gate.cmdlineNotFound);
+			area.remove((VectorObject)g.gfx);
 			Gate.getW().uiNeedUpdate(this);
 		}
 		
@@ -287,9 +289,10 @@ class GuiGFX extends GuiPanel
 
 			else if (type.equals("text"))
 			{
-				final String text = words.getString(Gate.cmdlineCenterX);
-				final float size = words.getPosFloat(Gate.cmdlineCenterX);
-				gfx.put(name, g = new Gfx(new Text(0, 0, text), x1, y1, size, 0));
+				final float width = words.getPosFloat(Gate.cmdlineWidth);
+				final float height = words.getPosFloat(Gate.cmdlineHeight);
+				final String text = words.getString(Gate.cmdlineText);
+				gfx.put(name, g = new Gfx(new Text(0, 0, text), x1, y1, width, height));
 			}
 
 			else if (type.equals("image"))
@@ -322,12 +325,13 @@ class GuiGFX extends GuiPanel
 				((Image)g.gfx).setFillOpacity(1);*/
 				// Rien a faire ?
 			}
-			else
+			else if (g.gfx instanceof Path)
 			{
 				((Path)g.gfx).setStrokeWidth(pixelWidth);
 				((Path)g.gfx).setStrokeOpacity(1);
 				((Path)g.gfx).setFillOpacity(0);
 			}
+			// else aarrgh
 			
 			if (defColor != null)
 				updateColor(defColor, /*fill*/true, g);
@@ -420,17 +424,19 @@ class GuiGFX extends GuiPanel
 
 		else if (g.gfx instanceof Text)
 		{
-			final Text t = (Text) g.gfx;
-			t.setX(x);
-			t.setY(y);
-			int size = x2;
-			t.setFontSize(size);
-			t.setFillOpacity(1);
+			// x2 is width, y2 is height
+			final Text t = (Text)g.gfx;
+			final float fsx = (float)x2 / t.getTextWidth();
+			final float fsy = (float)y2 / t.getTextHeight();
+			t.setFontSize((int)(t.getFontSize() * (fsx < fsy? fsx: fsy)));
+			t.setX(x - (t.getTextWidth() / 2));
+			t.setY(y + (t.getTextHeight() / 3));
+			//t.setFillOpacity(1);
 		}
 
 		else if (g.gfx instanceof Image)
 		{
-			final Image i = (Image) g.gfx;
+			final Image i = (Image)g.gfx;
 			i.setX(x);
 			i.setY(y);
 			i.setWidth(x2);
