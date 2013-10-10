@@ -85,7 +85,7 @@ class GuiPanel extends AbsolutePanel implements IntfObject
 		sons = new ArrayList<IntfObject>();
 
 		place = new Place(this);
-		// we are container, gap will be useful by inside objects
+		// we are container, gap will be useful inside objects
 		place.setGap(0);
 		
 		parent.addSon(this, name);
@@ -118,6 +118,7 @@ class GuiPanel extends AbsolutePanel implements IntfObject
 	
 	protected void hideScrollBars ()
 	{
+		// used with non-touch-screens
 		getElement().getStyle().setOverflow(Overflow.HIDDEN);
 	}
 		
@@ -149,6 +150,7 @@ class GuiPanel extends AbsolutePanel implements IntfObject
 	public void delSon (IntfObject son)
 	{
 		sons.remove(son);
+		remove(son.getWidget());
 	}	
 	
 	public boolean redraw ()

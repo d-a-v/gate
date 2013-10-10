@@ -166,10 +166,16 @@ public class Gate implements EntryPoint
 			public String		help	() { return GuiPanel.help(); }
 		});
 		
-		helpers.put("button", new IntfHelper() 
+		helpers.put("orgbutton", new IntfHelper() 
 		{
 			public IntfObject	starter (final IntfObject p, final String n) { return new GuiButton(p, n); }
 			public String		help	() { return GuiButton.help(); }
+		});
+
+		helpers.put("button", new IntfHelper() 
+		{
+			public IntfObject	starter (final IntfObject p, final String n) { return new GuiGButton(p, n); }
+			public String		help	() { return GuiGButton.help(); }
 		});
 
 		helpers.put("radio", new IntfHelper() 
@@ -228,8 +234,8 @@ public class Gate implements EntryPoint
 
 		helpers.put("sliderbar", new IntfHelper() 
 		{
-			public IntfObject	starter (final IntfObject p, final String n) { return new GuiSliderTouch(p, n); }
-			public String		help	() { return GuiSliderTouch.help(); }
+			public IntfObject	starter (final IntfObject p, final String n) { return new GuiSliderBar(p, n); }
+			public String		help	() { return GuiSliderBar.help(); }
 		});
 
 		helpers.put("image", new IntfHelper() 
@@ -645,6 +651,7 @@ public class Gate implements EntryPoint
 	{
 		IntfObject leaf = obj;
 		IntfObject son = null;
+
 		while (obj.getGOParent() != null)
 		{
 			son = obj;

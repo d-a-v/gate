@@ -78,7 +78,8 @@ class GuiGFX extends GuiPanel
 	private static final int pixelWidth = 1;
 	private static final int arrowDivider = 3;
 	private static final float arrowPercent = 8f;
-	private String defColor = null, defBColor = null; 
+	
+	private String defColor = null, defBColor = null;
 	
 	protected final class Gfx
 	{
@@ -96,6 +97,7 @@ class GuiGFX extends GuiPanel
 		public float x1, y1, x2, y2;
 		public Boolean drawn = false;
 		public ArrayList<xy> path = null;
+		private boolean vertical = false;		// text only
 		
 		public Gfx (final VectorObject gfx, final float x1, final float y1, final float x2, final float y2)
 		{
@@ -104,7 +106,18 @@ class GuiGFX extends GuiPanel
 			this.y1 = y1;
 			this.x2 = x2;
 			this.y2 = y2;
-			this.drawn = false;
+		}
+		
+		public void setVertical (boolean vertical)
+		{
+			this.vertical = vertical;
+			if (gfx instanceof Text)
+				((Text)gfx).setRotation(vertical? -90: 0);
+		}
+		
+		public boolean isVertical ()
+		{
+			return vertical;
 		}
 	}
 	
@@ -116,6 +129,11 @@ class GuiGFX extends GuiPanel
 		super(parent, name);
 		area = new DrawingArea(0, 0);
 		add(area);
+	}
+	
+	protected Gfx getGfx (String name)
+	{
+		return gfx.get(name);
 	}
 		
 	public static String help ()
@@ -177,12 +195,22 @@ class GuiGFX extends GuiPanel
 				((Path)g.gfx).setFillOpacity(opacity);
 			}
 		}
+		
 		if (g.gfx instanceof Ellipse)
+		{
 			((Ellipse)g.gfx).setStrokeColor(color);
+			((Ellipse)g.gfx).setStrokeOpacity(opacity);
+		}
 		else if (g.gfx instanceof Text)
-			((Text)g.gfx).setStrokeColor(color);
+		{
+			//((Text)g.gfx).setStrokeColor(color);
+			((Text)g.gfx).setStrokeOpacity(0);//opacity);
+		}
 		else // path
+		{
 			((Path)g.gfx).setStrokeColor(color);
+			((Path)g.gfx).setStrokeOpacity(opacity);
+		}
 	}
 		
 	public boolean update (final Words words) throws WordsException
@@ -314,8 +342,8 @@ class GuiGFX extends GuiPanel
 			}
 			else if (g.gfx instanceof Text)
 			{
-				((Text)g.gfx).setStrokeWidth(pixelWidth);
-				((Text)g.gfx).setStrokeOpacity(1);
+				//((Text)g.gfx).setStrokeWidth(pixelWidth);
+				((Text)g.gfx).setStrokeOpacity(0);//1);
 				((Text)g.gfx).setFillOpacity(1);
 			}
 			else if (g.gfx instanceof Image)
@@ -359,7 +387,7 @@ class GuiGFX extends GuiPanel
 			
 			final Gfx g = gfx.get(name);		
 			if (g == null)
-				return Gate.getW().error(words, -1, Gate.cmdlineNotFound);
+				return Gate.getW().error(words, -2, Gate.cmdlineNotFound);
 
 			updateColor(color, isFirst, g);
 		}
@@ -374,11 +402,11 @@ class GuiGFX extends GuiPanel
 			{
 				public void onClick (final ClickEvent event)
 				{
-					Gate.getW().send("'" + getName() + "' '" + name + "'");
+					Gate.getW().send("'" + getName() + "' '" + /*displayN*/name + "'");
 				}
 			});
 		}
-
+		
 		else
 			return super.update(words);
 		
@@ -390,10 +418,10 @@ class GuiGFX extends GuiPanel
 	
 	public void redraw1 (final Gfx g)
 	{
-		final int x = (int)(g.x1 * w100);
-		final int y = (int)(g.y1 * h100);
-		final int x2 = (int)(g.x2 * w100);
-		final int y2 = (int)(g.y2 * h100);
+		final int x = (int)(g.x1 * w100 + 0.5f);
+		final int y = (int)(g.y1 * h100 + 0.5f);
+		final int x2 = (int)(g.x2 * w100 + 0.5f);
+		final int y2 = (int)(g.y2 * h100 + 0.5f);
 
 		if (g.gfx instanceof Ellipse)
 		{
@@ -403,7 +431,7 @@ class GuiGFX extends GuiPanel
 			e.setRadiusX(x2);
 			e.setRadiusY(y2);
 		}
-		
+
 		else if (g.gfx instanceof Path)
 		{
 			final Path p = (Path)g.gfx;
@@ -411,14 +439,14 @@ class GuiGFX extends GuiPanel
 			{
                 p.moveTo(x, y);
 				for (Gfx.xy xy: g.path)
-					p.lineTo((int)(xy.x * w100), (int)(xy.y * h100));
+					p.lineTo((int)(xy.x * w100 + 0.5f), (int)(xy.y * h100 + 0.5f));
 			}
 			else
 			{
 				int c = 1;
 				p.setStep(1, new MoveTo(false, x, y));
 				for (Gfx.xy xy: g.path)
-					p.setStep(++c, new LineTo(false, (int)(xy.x * w100), (int)(xy.y * h100)));
+					p.setStep(++c, new LineTo(false, (int)(xy.x * w100 + 0.5f), (int)(xy.y * h100 + 0.5f)));
 			}
 		}
 
@@ -429,9 +457,8 @@ class GuiGFX extends GuiPanel
 			final float fsx = (float)x2 / t.getTextWidth();
 			final float fsy = (float)y2 / t.getTextHeight();
 			t.setFontSize((int)(t.getFontSize() * (fsx < fsy? fsx: fsy)));
-			t.setX(x - (t.getTextWidth() / 2));
-			t.setY(y + (t.getTextHeight() / 3));
-			//t.setFillOpacity(1);
+			t.setX((int)(x - (t.getTextWidth() / 2f)));
+			t.setY((int)(y + (t.getTextHeight() / 3f)));
 		}
 
 		else if (g.gfx instanceof Image)
@@ -454,13 +481,17 @@ class GuiGFX extends GuiPanel
 	
 	public boolean redraw ()
 	{
-		int w, h; 
+		int w = getPlace().c(Place.width).getPixel();
+		int h = getPlace().c(Place.height).getPixel();
 		
-		area.setWidth(w = getPlace().c(Place.width).getPixel());
-		area.setHeight(h = getPlace().c(Place.height).getPixel());
+		if (w <= 0 || h <= 0)
+			// should return false
+			// but we shall get another event when the window will grow ?
+			// this prevents useless timer trying to redraw 
+			return true; 
 		
-		if (w == 0 || h == 0)
-			return false;
+		area.setWidth(w);
+		area.setHeight(h);
 		
 		w100 = w / 100f;
 		h100 = h / 100f;
@@ -470,7 +501,7 @@ class GuiGFX extends GuiPanel
 		return true;
 	}
 
-	public void	setSonTitle (final IntfObject son, final String title)
+	public void setSonTitle (final IntfObject son, final String title)
 	{
 		// this widget do not have son or title
 	}

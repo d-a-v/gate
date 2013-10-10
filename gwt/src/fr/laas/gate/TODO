@@ -1,4 +1,6 @@
-uiNeedUpdate automatically starts a timer for refresh ?
+guigbutton: vertical text when vertical
+guigbutton: change appearance when clicked and enabled
+uiNeedUpdate or call to "update" automatically starts a timer for refresh ?
 using a ; (by mistake) in hostname breaks things
 arrange object help: give an example for each
 calibration window: update displayed values on resize

@@ -55,7 +55,7 @@ libgate/webgwt.c libgate/webgwt.h: $(shell echo ../gwt/src/fr/laas/gate/*.java)
 	$(MAKE) -f $(MAKEFILE_LIST) libgate/gate-zrawc
 	cd ../gwt; ant build
 	cd ../gwt/war/gate && wget http://www.laas.fr/favicon.ico; true
-	cd libgate; here=`pwd`; cd ../../gwt/war/gate && valgrind $${here}/gate-zrawc $${here}/webgwt bin `find -type f`
+	cd libgate; here=`pwd`; cd ../../gwt/war/gate && $${here}/gate-zrawc $${here}/webgwt bin `find -type f -exec echo {} \;`
 
 
 .SECONDARY: $(BIN:%=%.o)
