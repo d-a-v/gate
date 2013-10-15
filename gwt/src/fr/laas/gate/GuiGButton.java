@@ -126,6 +126,16 @@ class GuiGButton extends GuiGPanel
 				;
 	}
 	
+	private void blur ()
+	{
+		parse(name + "# update" + cmdfg + ",0.5" + cmdbg + ",0.5");		
+	}
+	
+	private void unBlur ()
+	{
+		parse(name + "# update" + cmdfg + cmdbg);
+	}
+	
 	protected void gfxSetup ()
 	{
 		gfx.addMouseDownHandler(new MouseDownHandler()
@@ -133,7 +143,7 @@ class GuiGButton extends GuiGPanel
 			public void onMouseDown (MouseDownEvent event)
 			{
 				if (isEnabled())
-					parse(name + "# update" + cmdfg + ",0.5" + cmdbg + ",0.5");
+					blur();
 			}
 		});
 		
@@ -141,7 +151,8 @@ class GuiGButton extends GuiGPanel
 		{
 			public void onMouseUp (MouseUpEvent event)
 			{
-				parse(name + "# update" + cmdfg + cmdbg);
+				if (isEnabled())
+					unBlur();
 			}
 		});
 		
@@ -149,7 +160,8 @@ class GuiGButton extends GuiGPanel
 		{
 			public void onMouseOut (MouseOutEvent event)
 			{
-				parse(name + "# update" + cmdfg + cmdbg);
+				if (isEnabled())
+					unBlur();
 			}
 		});
 	}
@@ -167,9 +179,15 @@ class GuiGButton extends GuiGPanel
 			updateText();
 		}
 		else if (words.checkNextAndForward("enable"))
+		{
+			unBlur();
 			setEnabled(true);
+		}
 		else if (words.checkNextAndForward("disable"))
+		{
+			blur();
 			setEnabled(false);
+		}
 		else if (words.checkNextAndForward("fg"))
 			parse(name + "# update" + (cmdfg = " color t " + words.getString(Gate.cmdlineColor)));
 		else if (words.checkNextAndForward("bg"))
