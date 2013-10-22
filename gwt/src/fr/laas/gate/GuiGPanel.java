@@ -55,6 +55,8 @@ import org.vaadin.gwtgraphics.client.DrawingArea;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 
 
@@ -132,6 +134,16 @@ abstract class GuiGPanel extends GuiPanel
 			Gate.getW().parseMulti(name + "# add " + name + " gfx " + gfxCreateString());
 			gfxPanel = ((GuiGFX)Gate.getO(name + "#")); 
 			gfx = gfxPanel.getDrawingArea();
+
+			// disable firefox image dragging
+			gfx.addMouseDownHandler(new MouseDownHandler()
+			{
+				public void onMouseDown (MouseDownEvent event)
+				{
+					event.preventDefault(); 
+				}
+			});
+
 			gfxSetup();
 			return false; // let some time for things to organize
 		}

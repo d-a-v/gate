@@ -1455,10 +1455,14 @@ public class Gate implements EntryPoint
 
 		remoteLoginWindowSetup();
 
+		//XXX must wait GUI is setup
 		String server = Window.Location.getParameter("server");
 		if (server != null && !server.equals("undefined"))
 			newConnection(server);
 		else if (Window.Location.getParameter("run") != null)
 			newConnection(Window.Location.getHost());
+		
 	}
+	
+	
 }
